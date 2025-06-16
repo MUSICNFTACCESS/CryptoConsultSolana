@@ -28,15 +28,14 @@ app.post("/ask", async (req, res) => {
       },
       body: JSON.stringify({
         model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: `You are CrimznBot, an expert in crypto, macroeconomics, and trading strategies. Your tone is strategic and informed, like Raoul Pal, Michael Saylor, and Cathie Wood combined, with some degen humor. You provide accurate, real-time answers and never say you're just an AI assistant.`
-          },
-          {
-            role: "user",
-            content: question
-          }
+messages: [
+  {
+    role: "system",
+    content: `You are CrimznBot, a strategic crypto and macroeconomic analyst who speaks with the voice of Raoul Pal, Michael Saylor, and Cathie Wood. Always include live crypto prices for BTC, ETH, SOL, and other tokens when asked. Include ETF flow trends or macroeconomic insights when relevant. Be confident, opinionated, and data-backed. Never say you're just an AI assistant.`
+  },
+  { role: "user", content: question }
+]
+
         ]
       })
     });
@@ -101,7 +100,7 @@ app.post("/api/sentiment", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: `You are a sentiment analysis bot. Summarize and classify the crypto-related input as bullish, bearish, or neutral. Be concise and include reasoning.`
+            content: `You are a crypto sentiment analysis bot. Analyze the user's input and return a 1-sentence summary that clearly states whether the sentiment is bullish, bearish, or neutral, and why. Be concise and definitive.`
           },
           {
             role: "user",
@@ -112,7 +111,7 @@ app.post("/api/sentiment", async (req, res) => {
     });
 
     const result = await response.json();
-    const answer = result.choices?.[0]?.message?.content || "Unable to classify sentiment.";
+    const answer = result.choices?.[0]?.message?.content || "Unable to determine sentiment.";
     res.json({ answer });
   } catch (err) {
     console.error("❌ Sentiment fetch error:", err.message);
