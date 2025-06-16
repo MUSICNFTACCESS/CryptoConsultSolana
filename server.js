@@ -117,7 +117,43 @@ app.post("/verify-sol", async (req, res) => {
   }
 });
 
+//
+// 🔓 Solana Unlock Verification Endpoint
+//
+app.post("/verify-sol", async (req, res) => {
+  const { wallet } = req.body;
+  const yourAddress = "Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF";
+  const requiredAmount = 0.025;
+
+  if (!wallet) return res.status(400).json({ status: "error", message: "Missing wallet address" });
+
+  try {
+    const txRes = await fetch(`https://public-api.solscan.io/account/transactions?address=${wallet}&limit=20`, {
+      headers: { accept: "application/json" }
+    });
+
+    const txs = await txRes.json();
+    const matched = txs.find(tx =>
+      tx.parsedInstruction?.some(instr =>
+        instr.type === "transfer" &&
+        instr.destination === yourAddress &&
+        parseFloat(instr.lamports || 0) >= requiredAmount * 1e9
+      )
+    );
+
+    if (matched) {
+      res.json({ status: "unlocked" });
+    } else {
+      res.json({ status: "locked" });
+    }
+  } catch (err) {
+    console.error("❌ Solana verify error:", err.message);
+    res.status(500).json({ status: "error", message: "Verification failed" });
+  }
+});
+
 // 🚀 Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+
