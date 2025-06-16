@@ -5,3 +5,4 @@
 // 🔁 Redeploy after model upgrade: Mon Jun 16 15:05:57 EDT 2025
 // 🔁 WalletConnect patch: Mon Jun 16 15:21:08 EDT 2025
 // 🔁 Final deploy: Mon Jun 16 15:45:56 EDT 2025
+// 🔁 Script fix: Mon Jun 16 16:01:45 EDT 2025
