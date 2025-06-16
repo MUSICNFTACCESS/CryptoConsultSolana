@@ -2,105 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CryptoConsult by Crimzn</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 1rem;
-      background-color: #000;
-      color: #f7931a;
-      font-family: Courier, monospace;
-      text-align: center;
-    }
-    h1, h2, h3 {
-      margin: 1rem 0 0.5rem;
-    }
-    button, a.button {
-      background-color: #f7931a;
-      color: #000;
-      border: none;
-      padding: 0.6rem 1rem;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
-      margin: 0.3rem;
-      display: inline-block;
-    }
-    #chat-box {
-      max-width: 600px;
-      margin: 1rem auto;
-      padding: 1rem;
-      background-color: #111;
-      border-radius: 8px;
-      min-height: 80px;
-    }
-    .user { color: #f7931a; }
-    .bot { color: #0f0; margin-top: 0.3rem; }
-    input, textarea {
-      width: 90%;
-      padding: 0.5rem;
-      margin-top: 1rem;
-      border-radius: 6px;
-      border: none;
-    }
-    #payment-options {
-      display: none;
-      margin-top: 1rem;
-    }
-    #live-prices, #sentiment-result {
-      margin-bottom: 1rem;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-web@0.9.9/lib/index.iife.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-wallets@0.11.12/lib/index.iife.min.js"></script>
 </head>
 <body>
   <h1>CryptoConsult by Crimzn</h1>
-  <h3>Web3 Consulting Powered by AI + Onchain Tools</h3>
+  <p>🧠 Real-time guidance, price tracking, and sentiment powered by CrimznBot</p>
 
-  <div id="live-prices">
-    <p><strong>Live Prices:</strong></p>
-    <div id="prices">BTC: $-- | ETH: $-- | SOL: $--</div>
+  <div id="prices">
+    <strong>BTC:</strong> <span id="btc-price">Loading...</span> |
+    <strong>ETH:</strong> <span id="eth-price">Loading...</span> |
+    <strong>SOL:</strong> <span id="sol-price">Loading...</span>
   </div>
 
-  <h3>Available Services:</h3>
+  <div id="chat"></div>
+  <input id="question" placeholder="Ask CrimznBot anything..." />
+  <button onclick="askQuestion()">Ask</button>
+
+  <div class="wallet-controls">
+    <button id="connect-btn">🔌 Connect Wallet</button>
+    <button id="disconnect-btn" style="display:none;">❌ Disconnect</button>
+  </div>
+
+  <h2>📊 Market Sentiment Pulse Check</h2>
+  <input id="pulse-input" placeholder="Type a narrative or token..." />
+  <button onclick="pulseIt()">Pulse It</button>
+  <div id="pulse-result"></div>
+
+  <h2>🛠️ Available Services</h2>
   <ul>
-    <li>🧠 Technical Analysis (Crypto/Stocks)</li>
-    <li>🔐 Wallet Setup & Onramping</li>
-    <li>⚖️ Risk Management</li>
-    <li>📩 Portfolio Strategy</li>
-    <li>🪙 Token + dApp Support</li>
+    <li>📊 Technical & Fundamental Analysis</li>
+    <li>💼 Portfolio Allocation Guidance</li>
+    <li>🔐 Wallet Setup & On-Ramping</li>
+    <li>📈 Trend Interpretation (Macro & On-Chain)</li>
   </ul>
 
-  <h3>Support & Payments:</h3>
-  <a class="button" href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8">Pay $99.99 for Services Rendered</a>
-  <a class="button" href="https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b">Tip 1 USDC</a>
-  <a class="button" href="https://crypto-consult.onrender.com/whitepaper.html">📄 View Whitepaper</a>
-  <a class="button" href="https://crypto-consult.onrender.com/blog.html">📅 BTC Daily Blog</a>
-  <a class="button" href="https://t.me/CrimznBot" target="_blank">📬 Contact via Telegram</a>
-
-  <h3>Talk to CrimznBot:</h3>
-  <div id="chat-box"></div>
-  <input type="text" id="user-input" placeholder="Ask a crypto question..." />
-  <br />
-  <button id="send-button">Send</button>
-
-  <div id="payment-options">
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8')">Pay $99.99 for Services Rendered</button>
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b')">Tip 1 USDC</button>
-    <button onclick="window.open('https://crypto-consult.onrender.com/whitepaper.html')">View Whitepaper</button>
-    <button onclick="window.open('https://crypto-consult.onrender.com/blog.html')">BTC Daily Blog</button>
-    <button onclick="window.open('https://t.me/CrimznBot')">📬 Contact via Telegram</button>
+  <h2>📈 BTC Daily Blog</h2>
+  <div class="links">
+    <a href="blog.html" class="button">📈 View BTC Blog</a>
   </div>
 
-  <h3>Alpha Pulse Tracker+</h3>
-  <input type="text" id="sentiment-query" placeholder="Enter token or term..." />
-  <button onclick="getSentiment()">🔍 Pulse It</button>
-  <div id="sentiment-result"></div>
+  <h2>📜 Whitepaper</h2>
+  <div class="links">
+    <a href="whitepaper.html" class="button">📜 View Whitepaper</a><br/>
+    <a href="whitepaper.pdf" download class="button">⬇ Download Whitepaper (PDF)</a>
+  </div>
+
+  <h2>💸 Support & Payments</h2>
+  <div class="links">
+    <a href="https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b" target="_blank" class="button">Pay $99.99 for Services Rendered</a><br/>
+    <a href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8" target="_blank" class="button">Send Tip (1 USDC)</a><br/>
+    <a href="https://solana.com/pay" target="_blank" class="button">Pay with Solana</a><br/>
+    <a href="https://paypal.me/crimzn" target="_blank" class="button">Pay with PayPal</a>
+  </div>
+
+  <h2>📬 Contact Me</h2>
+  <div class="links">
+    <a href="mailto:crimzncipriano@gmail.com" class="button">📧 Email</a>
+    <a href="https://t.me/Crimznbot" target="_blank" class="button">💬 Telegram</a>
+  </div>
+
+  <h2>📥 ETF Inflows (BTC & ETH)</h2>
+  <div class="links">
+    <a href="https://farside.co.uk" target="_blank" class="button">BTC ETF Flows (Farside)</a><br/>
+    <a href="https://pro.nansen.ai/etf" target="_blank" class="button">ETH ETF Flows (Nansen)</a>
+  </div>
 
   <script src="script.js"></script>
 </body>
