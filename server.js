@@ -6,6 +6,8 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const REQUIRED_SOL = 0.025;
+const DESTINATION_ADDRESS = "Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF";
 
 app.use(cors());
 app.use(express.json());
@@ -29,83 +31,43 @@ app.post("/ask", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: "You are CrimznBot, a strategic crypto and macroeconomic advisor. Answer with clarity, insight, and a hint of degen."
-          },
-          { role: "user", content: question }
-        ]
-      })
-    });
-
-    const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content?.trim() || "No response available.";
-    res.json({ answer });
-  } catch (error) {
-    console.error("❌ OpenAI request failed:", error.message);
-    res.status(500).json({ answer: null, error: "OpenAI request failed" });
-  }
-});
-
-//
-// 📊 Sentiment Pulse Endpoint
-//
-app.post("/api/sentiment", async (req, res) => {
-  const { query } = req.body;
-  if (!query) return res.status(400).json({ error: "Missing query" });
-
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: "You are a crypto sentiment analyst. Return sentiment as: Bullish, Bearish, or Neutral with a 1-line explanation."
+            content: `You are CrimznBot, an expert in crypto, macroeconomics, and trading strategies. Your tone is strategic and informed, like Raoul Pal, Michael Saylor, and Cathie Wood combined, with some degen humor. You provide accurate, real-time answers and never say you're just an AI assistant.`
           },
           {
             role: "user",
-            content: `Analyze sentiment for: ${query}`
+            content: question
           }
         ]
       })
     });
 
-    const data = await response.json();
-    const sentiment = data.choices?.[0]?.message?.content?.trim() || "No analysis.";
-    res.json({ summary: sentiment });
+    const result = await response.json();
+    const answer = result.choices?.[0]?.message?.content || "I'm not sure how to answer that.";
+    res.json({ answer });
   } catch (err) {
-    console.error("❌ Sentiment API error:", err.message);
-    res.status(500).json({ error: "Sentiment API failed" });
+    console.error("❌ Error calling OpenAI:", err.message);
+    res.status(500).json({ answer: "Error fetching CrimznBot response." });
   }
 });
 
 //
-// 🔓 Solana Unlock Verification Endpoint
+// 🔓 Solana Unlock Verification
 //
 app.post("/verify-sol", async (req, res) => {
   const { wallet } = req.body;
-  const yourAddress = "Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF";
-  const requiredAmount = 0.025;
-
-  if (!wallet) {
-    return res.status(400).json({ status: "error", message: "Missing wallet address" });
-  }
+  if (!wallet) return res.status(400).json({ status: "error", message: "Wallet missing" });
 
   try {
-    const txRes = await fetch(`https://public-api.solscan.io/account/transactions?account=${wallet}`, {
+    const txRes = await fetch(`https://public-api.solscan.io/account/transactions?account=${wallet}&limit=10`, {
       headers: { accept: "application/json" }
     });
-
     const txs = await txRes.json();
+
     const matched = txs.find(tx =>
       tx.parsedInstruction?.some(instr =>
         instr.type === "transfer" &&
-        instr.destination === yourAddress &&
-        parseFloat(instr.lamports || 0) >= requiredAmount * 1e9
+        instr.destination === DESTINATION_ADDRESS &&
+        parseFloat(instr.lamports || 0) >= REQUIRED_SOL * 1e9
       )
     );
 
@@ -121,8 +83,44 @@ app.post("/verify-sol", async (req, res) => {
 });
 
 //
-// 🚀 Start server
+// 📊 Pulse It Sentiment Tracker
 //
+app.post("/api/sentiment", async (req, res) => {
+  const { query } = req.body;
+  if (!query) return res.status(400).json({ answer: "Missing input" });
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: `You are a sentiment analysis bot. Summarize and classify the crypto-related input as bullish, bearish, or neutral. Be concise and include reasoning.`
+          },
+          {
+            role: "user",
+            content: query
+          }
+        ]
+      })
+    });
+
+    const result = await response.json();
+    const answer = result.choices?.[0]?.message?.content || "Unable to classify sentiment.";
+    res.json({ answer });
+  } catch (err) {
+    console.error("❌ Sentiment fetch error:", err.message);
+    res.status(500).json({ answer: "Sentiment analysis failed." });
+  }
+});
+
+// 🚀 Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
