@@ -9,3 +9,4 @@
 // 🔁 Final redeploy to fix button handlers: Mon Jun 16 16:10:41 EDT 2025
 // 🔁 UI fix: Mon Jun 16 16:18:45 EDT 2025
 // 🔁 JS Sync: Mon Jun 16 16:33:35 EDT 2025
+// 🚀 Paywall deployed: Mon Jun 16 16:55:30 EDT 2025
