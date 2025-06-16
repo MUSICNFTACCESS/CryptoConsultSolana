@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
-require("dotenv").config();
+const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch);
+require("dotenv").config(); // ✅ Load environment variables like OPENAI_API_KEY
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +9,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const REQUIRED_SOL = 0.025;
 const DESTINATION_ADDRESS = "Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF";
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
@@ -31,7 +32,7 @@ app.post("/ask", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: `You are CrimznBot, a strategic crypto and macroeconomic analyst. Provide confident, opinionated, and data-backed insights. Never say you're just an AI assistant. Always include live crypto prices for BTC, ETH, SOL, and other tokens when asked. Include ETF flow trends or macro when relevant.`
+            content: `You are CrimznBot, a strategic crypto and macroeconomic analyst who speaks with the voice of Raoul Pal, Michael Saylor, and Cathie Wood. Always include live crypto prices for BTC, ETH, SOL, and other tokens when asked. Include ETF flow trends or macroeconomic insights when relevant. Be confident, opinionated, and data-backed. Never say you're just an AI assistant.`
           },
           {
             role: "user",
@@ -55,7 +56,7 @@ app.post("/ask", async (req, res) => {
 //
 app.post("/verify-sol", async (req, res) => {
   const { wallet } = req.body;
-  if (!wallet) return res.status(400).json({ status: "error", message: "Wallet missing" });
+  if (!wallet) return res.status(400).json({ status: "error", message: "Wallet not provided" });
 
   try {
     const txRes = await fetch(`https://public-api.solscan.io/account/transactions?account=${wallet}&limit=10`, {
@@ -78,7 +79,7 @@ app.post("/verify-sol", async (req, res) => {
     }
   } catch (err) {
     console.error("❌ Solana verify error:", err.message);
-    res.status(500).json({ status: "error", message: "Verification failed" });
+    res.status(500).json({ status: "error", message: "Verification failed." });
   }
 });
 
@@ -101,7 +102,7 @@ app.post("/api/sentiment", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: `You are a crypto sentiment analysis bot. Analyze the user's input and return a 1-sentence summary that clearly states whether the sentiment is bullish, bearish, or neutral, and why. Be concise and definitive.`
+            content: `You are a crypto sentiment analyzer. Based on the input text, respond with a brief summary of sentiment (bullish, bearish, or neutral) and the reasoning. Keep your output concise.`
           },
           {
             role: "user",
@@ -112,7 +113,7 @@ app.post("/api/sentiment", async (req, res) => {
     });
 
     const result = await response.json();
-    const answer = result.choices?.[0]?.message?.content || "Unable to determine sentiment.";
+    const answer = result.choices?.[0]?.message?.content || "Sentiment analysis failed.";
     res.json({ answer });
   } catch (err) {
     console.error("❌ Sentiment fetch error:", err.message);
@@ -120,7 +121,7 @@ app.post("/api/sentiment", async (req, res) => {
   }
 });
 
-// 🚀 Start server
+// 🚀 Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
