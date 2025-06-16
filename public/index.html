@@ -29,10 +29,13 @@
     <button id="disconnect-btn" style="display:none;">❌ Disconnect</button>
   </div>
 
-  <h2>📊 Market Sentiment Pulse Check</h2>
-  <input id="pulse-input" placeholder="Type a narrative or token..." />
-  <button onclick="pulseIt()">Pulse It</button>
-  <div id="pulse-result"></div>
+<!-- 🔮 PulseIt Section -->
+<div id="pulseit-box" style="margin-top: 30px;">
+  <h3 style="color: #f7931a; font-family: Courier New;">PulseIt Sentiment</h3>
+  <input type="text" id="pulseit-input" placeholder="Enter topic (e.g., SOL, BTC, Trump)" style="padding: 8px; width: 60%;" />
+  <button onclick="submitPulseIt()" style="padding: 8px; background-color: #f7931a; border: none; color: white; font-family: Courier New;">Analyze</button>
+  <pre id="pulseit-result" style="margin-top: 15px; color: #00ff00; font-family: Courier New;"></pre>
+</div>
 
   <h2>🛠️ Available Services</h2>
   <ul>
