@@ -1,109 +1,87 @@
-// 🌐 Basic Setup
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
-import dotenv from "dotenv";
-import bodyParser from "body-parser";
-
+const express = require("express");
+const bodyParser = require("body-parser");
+const path = require("path");
+const dotenv = require("dotenv");
 dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
-app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static("public"));
 
-console.log("🔑 OPENAI Key present:", !!OPENAI_KEY);
-console.log("🟢 CrimznBot server starting...");
+// ✅ Serve frontend from /public explicitly
+app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ CrimznBot AI Endpoint
+// ✅ Serve index.html on root
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+// ✅ Route for CrimznBot (chat questions)
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
-  if (!question) return res.status(400).json({ answer: "Missing question." });
+  if (!question) return res.status(400).json({ error: "Missing question" });
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_KEY}`,
-        "Content-Type": "application/json",
+        "Authorization": \`Bearer \${process.env.OPENAI_API_KEY}\`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: question }],
+        max_tokens: 200
+      })
+    });
+
+    const data = await response.json();
+    const answer = data.choices?.[0]?.message?.content || "No response";
+    res.json({ answer });
+  } catch (err) {
+    res.status(500).json({ error: "OpenAI request failed" });
+  }
+});
+
+// ✅ Route for Market Sentiment (Pulse It)
+app.post("/api/sentiment", async (req, res) => {
+  const { query } = req.body;
+  if (!query) return res.status(400).json({ error: "Missing query" });
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": \`Bearer \${process.env.OPENAI_API_KEY}\`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: `You are CrimznBot, a strategic crypto and macroeconomic analyst who speaks with the voice of Raoul Pal, Michael Saylor, and Cathie Wood. Always include live crypto prices for BTC, ETH, SOL, and other tokens when asked. Include ETF flow trends or macroeconomic insights when relevant. Be confident, opinionated, and data-backed. Never say you're just an AI assistant.`,
+            content: "Summarize the current crypto sentiment surrounding the following topic:"
           },
-          {
-            role: "user",
-            content: question,
-          }
-        ]
+          { role: "user", content: query }
+        ],
+        max_tokens: 150
       })
     });
 
-    const result = await response.json();
-    const answer = result.choices?.[0]?.message?.content || "⚠️ No response from CrimznBot.";
+    const data = await response.json();
+    const answer = data.choices?.[0]?.message?.content || "No summary found";
     res.json({ answer });
   } catch (err) {
-    console.error("❌ CrimznBot Error:", err.message);
-    res.status(500).json({ answer: "CrimznBot failed. Check server logs." });
+    res.status(500).json({ error: "Sentiment request failed" });
   }
 });
 
-// ✅ Sentiment Analysis Endpoint
-app.post("/api/sentiment", async (req, res) => {
-  const { query } = req.body;
-  if (!query) return res.status(400).json({ answer: "Missing query." });
-
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: "You are a sentiment analysis bot. Summarize and classify the sentiment of the user's input as bullish, bearish, or neutral. Keep it short.",
-          },
-          {
-            role: "user",
-            content: query,
-          }
-        ]
-      })
-    });
-
-    const result = await response.json();
-    console.log("📈 Sentiment result:", result);
-
-    const answer = result.choices?.[0]?.message?.content || "⚠️ No sentiment result.";
-    res.json({ answer });
-  } catch (err) {
-    console.error("❌ Sentiment fetch error:", err.message);
-    res.status(500).json({ answer: "Sentiment analysis failed." });
-  }
+// ✅ Fallback for unknown routes
+app.use((req, res) => {
+  res.status(404).send("404 Not Found");
 });
 
-// ✅ Wallet Verification Endpoint (TEMP: Dev unlock)
-app.post("/verify-sol", async (req, res) => {
-  const { wallet } = req.body;
-  if (!wallet) return res.status(400).json({ status: "error", message: "Missing wallet" });
-
-  if (wallet === "Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF") {
-    return res.json({ status: "unlocked" });
-  }
-
-  return res.status(403).json({ status: "error", message: "Verification failed." });
-});
-
-// ✅ Start Server
 app.listen(PORT, () => {
-  console.log(`🚀 CrimznBot server running at http://localhost:${PORT}`);
+  console.log(\`✅ Server running on http://localhost:\${PORT}\`);
 });
