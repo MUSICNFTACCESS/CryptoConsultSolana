@@ -9,10 +9,10 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // Serve index.html, etc.
+app.use(express.static("public"));
 
 //
-// 🤖 CrimznBot Chat Endpoint (used by /ask)
+// 🤖 CrimznBot Chat Endpoint
 //
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
@@ -25,11 +25,11 @@ app.post("/ask", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are CrimznBot, a strategic crypto and macroeconomic consultant like Raoul Pal, Michael Saylor, and Cathie Wood. Provide concise, confident, data-informed answers based on real market dynamics and institutional insights."
+            content: "You are CrimznBot, a strategic crypto and macroeconomic advisor with a degen edge."
           },
           { role: "user", content: question }
         ]
@@ -37,7 +37,7 @@ app.post("/ask", async (req, res) => {
     });
 
     const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content?.trim() || "No response";
+    const answer = data.choices?.[0]?.message?.content?.trim() || "No response.";
     res.json({ answer });
   } catch (error) {
     console.error("❌ OpenAI request failed:", error.message);
@@ -46,7 +46,7 @@ app.post("/ask", async (req, res) => {
 });
 
 //
-// 📈 Sentiment Analyzer (used by /api/sentiment)
+// 📈 Sentiment Analyzer
 //
 app.post("/api/sentiment", async (req, res) => {
   const { query } = req.body;
@@ -60,40 +60,64 @@ app.post("/api/sentiment", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are a crypto sentiment analyst. Analyze sentiment for the term provided and respond in JSON format with a 1-10 score and short summary. Use: { \"sentiment_score\": 7, \"summary\": \"...\", \"tags\": [\"Bullish\"] }"
+            content: "You are a crypto sentiment analyst. Analyze sentiment based on crypto market signals and language tone."
           },
           {
             role: "user",
-            content: `Analyze sentiment for ${query}. Respond only with a clean JSON object.`
+            content: `Analyze sentiment for ${query}. Respond only with a quick pulse like 'Bullish', 'Bearish', or 'Neutral'.`
           }
         ]
       })
     });
 
-    const raw = await response.json();
-    const content = raw.choices?.[0]?.message?.content?.trim();
-
-    const cleaned = content.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(cleaned);
-
-    res.json({
-      sentiment_score: parsed.sentiment_score || "N/A",
-      summary: parsed.summary || "N/A",
-      tags: parsed.tags || ["Uncertain"]
-    });
+    const data = await response.json();
+    const result = data.choices?.[0]?.message?.content?.trim() || "No sentiment.";
+    res.json({ result });
   } catch (error) {
-    console.error("❌ GPT sentiment error:", error.message);
-    res.status(500).json({ error: "Sentiment analysis failed" });
+    console.error("❌ Sentiment request failed:", error.message);
+    res.status(500).json({ result: null, error: "Sentiment API failed" });
   }
 });
 
 //
-// 🚀 Start Server
+// 🔓 Solana Unlock Endpoint
 //
+app.post("/verify-sol", async (req, res) => {
+  const { wallet } = req.body;
+  if (!wallet) return res.status(400).json({ status: "Missing wallet address" });
+
+  const yourAddress = "Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF";
+
+  try {
+    const txRes = await fetch(`https://public-api.solscan.io/account/transactions?address=${wallet}&limit=10`, {
+      headers: { accept: "application/json" }
+    });
+
+    const txs = await txRes.json();
+    const matched = txs.find(tx =>
+      tx.parsedInstruction?.some(instr =>
+        instr.type === "transfer" &&
+        instr.destination === yourAddress &&
+        parseFloat(instr.lamports || 0) >= 0.025 * 1e9
+      )
+    );
+
+    if (matched) {
+      res.json({ status: "unlocked" });
+    } else {
+      res.json({ status: "locked" });
+    }
+  } catch (err) {
+    console.error("❌ Solana verify error:", err.message);
+    res.status(500).json({ status: "error" });
+  }
+});
+
+// 🚀 Start server
 app.listen(PORT, () => {
-  console.log(`🚀 CrimznBot backend running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
