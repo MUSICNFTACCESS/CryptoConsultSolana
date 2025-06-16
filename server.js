@@ -25,11 +25,11 @@ app.post("/ask", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4",
         messages: [
           {
             role: "system",
-            content: "You are CrimznBot, a strategic crypto and macroeconomic advisor with a degen edge."
+            content: "You are CrimznBot, a strategic crypto and macroeconomic advisor. Answer with clarity, insight, and a hint of degen."
           },
           { role: "user", content: question }
         ]
@@ -37,7 +37,7 @@ app.post("/ask", async (req, res) => {
     });
 
     const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content?.trim() || "No response.";
+    const answer = data.choices?.[0]?.message?.content?.trim() || "No response available.";
     res.json({ answer });
   } catch (error) {
     console.error("❌ OpenAI request failed:", error.message);
@@ -46,7 +46,7 @@ app.post("/ask", async (req, res) => {
 });
 
 //
-// 📈 Sentiment Analyzer
+// 📊 Sentiment Pulse Endpoint
 //
 app.post("/api/sentiment", async (req, res) => {
   const { query } = req.body;
@@ -60,36 +60,40 @@ app.post("/api/sentiment", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4",
         messages: [
           {
             role: "system",
-            content: "You are a crypto sentiment analyst. Analyze sentiment based on crypto market signals and language tone."
+            content: "You are a crypto sentiment analyst. Return sentiment as: Bullish, Bearish, or Neutral with a 1-line explanation."
           },
           {
             role: "user",
-            content: `Analyze sentiment for ${query}. Respond only with a quick pulse like 'Bullish', 'Bearish', or 'Neutral'.`
+            content: `Analyze sentiment for: ${query}`
           }
         ]
       })
     });
 
     const data = await response.json();
-    const result = data.choices?.[0]?.message?.content?.trim() || "No sentiment.";
-    res.json({ result });
-  } catch (error) {
-    console.error("❌ Sentiment request failed:", error.message);
-    res.status(500).json({ result: null, error: "Sentiment API failed" });
+    const sentiment = data.choices?.[0]?.message?.content?.trim() || "No analysis.";
+    res.json({ summary: sentiment });
+  } catch (err) {
+    console.error("❌ Sentiment API error:", err.message);
+    res.status(500).json({ error: "Sentiment API failed" });
   }
 });
 
+//
 // 🔓 Solana Unlock Verification Endpoint
+//
 app.post("/verify-sol", async (req, res) => {
   const { wallet } = req.body;
   const yourAddress = "Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF";
   const requiredAmount = 0.025;
 
-  if (!wallet) return res.status(400).json({ status: "error", message: "Missing wallet address" });
+  if (!wallet) {
+    return res.status(400).json({ status: "error", message: "Missing wallet address" });
+  }
 
   try {
     const txRes = await fetch(`https://public-api.solscan.io/account/transactions?account=${wallet}`, {
@@ -116,9 +120,9 @@ app.post("/verify-sol", async (req, res) => {
   }
 });
 
+//
 // 🚀 Start server
+//
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
-
-(
