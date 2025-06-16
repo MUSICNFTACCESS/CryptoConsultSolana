@@ -28,20 +28,21 @@ app.post("/ask", async (req, res) => {
       },
       body: JSON.stringify({
         model: "gpt-4",
-messages: [
-  {
-    role: "system",
-    content: `You are CrimznBot, a strategic crypto and macroeconomic analyst who speaks with the voice of Raoul Pal, Michael Saylor, and Cathie Wood. Always include live crypto prices for BTC, ETH, SOL, and other tokens when asked. Include ETF flow trends or macroeconomic insights when relevant. Be confident, opinionated, and data-backed. Never say you're just an AI assistant.`
-  },
-  { role: "user", content: question }
-]
-
+        messages: [
+          {
+            role: "system",
+            content: `You are CrimznBot, a strategic crypto and macroeconomic analyst. Provide confident, opinionated, and data-backed insights. Never say you're just an AI assistant. Always include live crypto prices for BTC, ETH, SOL, and other tokens when asked. Include ETF flow trends or macro when relevant.`
+          },
+          {
+            role: "user",
+            content: question
+          }
         ]
       })
     });
 
     const result = await response.json();
-    const answer = result.choices?.[0]?.message?.content || "I'm not sure how to answer that.";
+    const answer = result.choices?.[0]?.message?.content || "I'm not sure how to respond.";
     res.json({ answer });
   } catch (err) {
     console.error("❌ Error calling OpenAI:", err.message);
