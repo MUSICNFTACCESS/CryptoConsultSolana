@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Configuration, OpenAIApi } from 'openai';
+import fetch from 'node-fetch';
 
 dotenv.config();
 
@@ -51,7 +52,7 @@ app.post('/ask', async (req, res) => {
       if (priceData[id] && priceData[id].usd) {
         return res.json({ answer: `💰 The price of ${token.toUpperCase()} is $${priceData[id].usd}` });
       } else {
-        return res.json({ answer: `❌ Sorry, I couldn't find the price for ${token}.` });
+        return res.json({ answer: `❌ Sorry, I couldn't find the price for ${token.toUpperCase()}.` });
       }
     } catch {
       return res.json({ answer: "⚠️ Failed to fetch token price." });
@@ -64,7 +65,7 @@ app.post('/ask', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: "You're CrimznBot, an expert in cryptocurrency, macroeconomics, and geopolitics. Speak with high confidence, insight, and edge—like Raoul Pal or Arthur Hayes—but grounded and helpful like ChatGPT. Keep responses short, helpful, and alpha-filled."
+          content: "You're CrimznBot, an expert in cryptocurrency, macroeconomics, technical analysis, and geopolitics. Respond like Raoul Pal with deep insights and real-time relevance."
         },
         {
           role: 'user',
@@ -73,41 +74,46 @@ app.post('/ask', async (req, res) => {
       ]
     });
 
-    const answer = aiRes.data.choices[0]?.message?.content || "No response";
-    res.json({ answer });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ answer: "❌ CrimznBot backend error." });
+    const botReply = aiRes.data.choices[0].message.content;
+    return res.json({ answer: botReply });
+  } catch (error) {
+    console.error("OpenAI error:", error);
+    return res.json({ answer: "❌ CrimznBot failed to respond." });
   }
 });
 
-// PulseIt Route
+// Handle Market Sentiment PulseIt
 app.post('/api/sentiment', async (req, res) => {
-  const query = req.body.query;
-
+  const query = req.body.query || "";
   try {
-    const pulseRes = await openai.createChatCompletion({
+    const aiRes = await openai.createChatCompletion({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: "You're PulseIt, an AI that summarizes crypto news, token flows, and macro sentiment in 1-2 sentences."
+          content: "You are PulseIt, a crypto market sentiment analyzer. Summarize the current sentiment from social and macro signals."
         },
         {
           role: 'user',
-          content: query
+          content: `Analyze sentiment: ${query}`
         }
       ]
     });
 
-    const summary = pulseRes.data.choices[0]?.message?.content || "No sentiment found.";
-    res.json({ answer: summary });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ answer: "❌ Sentiment check failed." });
+    const pulse = aiRes.data.choices[0].message.content;
+    return res.json({ answer: pulse });
+  } catch (error) {
+    console.error("Sentiment error:", error);
+    return res.status(500).json({ answer: "❌ PulseIt failed to analyze sentiment." });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
+
+
+
+
+
+
