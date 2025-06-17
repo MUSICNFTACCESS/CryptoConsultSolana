@@ -10,45 +10,17 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json());
 
 // ✅ Route: Root
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// ✅ Route: /chat (CrimznBot backend)
-app.get("/chat", async (req, res) => {
-  try {
-    const { message } = req.query;
-    if (!message) return res.status(400).json({ error: "Missing message" });
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are CrimznBot, a macroeconomic strategist combining insights from Raoul Pal, Michael Saylor, and Cathie Wood. Respond in a clear, strategic, crypto-native tone. If asked about prices, ETF flows, altcoin setups, or market macro, provide concise, useful context. Keep answers short, informative, and grounded in recent developments."
-        },
-        { role: "user", content: message },
-      ],
-      temperature: 0.5,
-    });
-
-    const reply = completion.choices[0].message.content;
-    res.json({ reply });
-  } catch (err) {
-    console.error("❌ /chat error:", err.message);
-    res.status(500).json({ error: "AI failed to respond" });
-  }
 });
 
 // ✅ Route: /prices -> Hybrid GPT-4o + CoinGecko fallback
@@ -79,61 +51,102 @@ app.get("/prices", async (req, res) => {
     const parsed = JSON.parse(jsonString);
 
     const keys = ["BTC", "ETH", "SOL"];
-    const valid = keys.every(k => parsed[k] && !parsed[k].includes("xxxxx"));
+    const valid = keys.every(k => parsed[k] && parsed[k] !== "xxxxx");
 
     if (valid) return res.json(parsed);
 
-    throw new Error("GPT returned placeholder values, falling back...");
-  } catch (err) {
-    console.warn("⚠️ GPT failed, using CoinGecko fallback:", err.message);
-    try {
-      const cg = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd"
-      ).then(res => res.json());
+    // Fallback: CoinGecko
+    const coingecko = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd"
+    ).then(r => r.json());
 
-      const fallback = {
-        BTC: cg.bitcoin.usd.toFixed(2),
-        ETH: cg.ethereum.usd.toFixed(2),
-        SOL: cg.solana.usd.toFixed(2),
-      };
-      return res.json(fallback);
-    } catch (fallbackErr) {
-      console.error("❌ CoinGecko fallback failed:", fallbackErr.message);
-      return res.status(500).json({ BTC: "Error", ETH: "Error", SOL: "Error" });
-    }
+    const fallback = {
+      BTC: coingecko.bitcoin.usd.toFixed(2),
+      ETH: coingecko.ethereum.usd.toFixed(2),
+      SOL: coingecko.solana.usd.toFixed(2),
+    };
+
+    res.json(fallback);
+  } catch (err) {
+    console.error("❌ /prices error:", err.message);
+    res.status(500).json({ BTC: "Error", ETH: "Error", SOL: "Error" });
   }
 });
 
-// ✅ Route: /pulseIt.json
-app.get("/pulseIt.json", (req, res) => {
-  const filePath = path.join(__dirname, "public", "pulseIt.json");
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ error: "Failed to read PulseIt" });
-    try {
-      const parsed = JSON.parse(data);
-      res.json(parsed);
-    } catch (parseErr) {
-      res.status(500).json({ error: "Invalid PulseIt JSON" });
-    }
-  });
+// ✅ Route: /pulseit -> Daily market sentiment
+app.get("/pulseit", async (req, res) => {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are CrimznBot. Give a quick 2-sentence PulseIt update with the latest crypto macro sentiment. Include any hot ETF news, BTC trend shifts, or key market inflows. Do not include disclaimers. Style is sharp, Crimzn-branded, slightly degen, always insightful."
+        },
+        {
+          role: "user",
+          content: "Give today’s PulseIt."
+        }
+      ],
+      temperature: 0.5,
+    });
+
+    const pulse = completion.choices[0].message.content;
+    console.log("📣 PulseIt:", pulse);
+    res.send(`<pre>${pulse}</pre>`);
+  } catch (err) {
+    console.error("❌ PulseIt error:", err.message);
+    res.status(500).send("PulseIt temporarily unavailable.");
+  }
+});
+
+// ✅ Route: /bot -> CrimznBot Q&A
+app.post("/bot", async (req, res) => {
+  try {
+    const userMessage = req.body.message;
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are CrimznBot, a no-BS GPT-4o crypto consultant. You answer like a strategist who blends real-time price data, crypto news, and degen energy with professionalism. Keep responses tight, accurate, and styled with Crimzn’s voice. No disclaimers."
+        },
+        {
+          role: "user",
+          content: userMessage
+        }
+      ],
+      temperature: 0.5,
+    });
+
+    const botReply = completion.choices[0].message.content;
+    res.json({ reply: botReply });
+  } catch (err) {
+    console.error("❌ Bot error:", err.message);
+    res.status(500).json({ reply: "CrimznBot is down — try again soon." });
+  }
 });
 
 // ✅ Route: /whitepaper
 app.get("/whitepaper", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "whitepaper.html"));
+  const pdfPath = path.join(__dirname, "public", "whitepaper.pdf");
+  fs.access(pdfPath, fs.constants.F_OK, (err) => {
+    if (err) return res.status(404).send("Whitepaper not found.");
+    res.sendFile(pdfPath);
+  });
 });
 
 // ✅ Route: /blog/:date
 app.get("/blog/:date", (req, res) => {
-  const { date } = req.params;
-  const blogPath = path.join(__dirname, "public", "blog", `${date}.html`);
-  fs.access(blogPath, fs.constants.F_OK, (err) => {
-    if (err) return res.status(404).send("Blog not found");
-    res.sendFile(blogPath);
+  const filePath = path.join(__dirname, "public", "blog", `${req.params.date}.html`);
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) return res.status(404).send("Blog post not found.");
+    res.sendFile(filePath);
   });
 });
 
 app.listen(PORT, () => {
   console.log(`✅ CrimznBot is live @ http://localhost:${PORT}`);
 });
-// 🛠️ Dummy change to trigger Render redeploy
