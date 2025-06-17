@@ -16,12 +16,39 @@ const openai = new OpenAI({
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.json());
 
 // ✅ Route: Root
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// ✅ Route: /chat (CrimznBot backend)
+app.get("/chat", async (req, res) => {
+  try {
+    const { message } = req.query;
+    if (!message) return res.status(400).json({ error: "Missing message" });
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are CrimznBot, a macroeconomic strategist combining insights from Raoul Pal, Michael Saylor, and Cathie Wood. Respond in a clear, strategic, crypto-native tone. If asked about prices, ETF flows, altcoin setups, or market macro, provide concise, useful context. Keep answers short, informative, and grounded in recent developments."
+        },
+        { role: "user", content: message },
+      ],
+      temperature: 0.5,
+    });
+
+    const reply = completion.choices[0].message.content;
+    res.json({ reply });
+  } catch (err) {
+    console.error("❌ /chat error:", err.message);
+    res.status(500).json({ error: "AI failed to respond" });
+  }
 });
 
 // ✅ Route: /prices -> Hybrid GPT-4o + CoinGecko fallback
@@ -52,98 +79,58 @@ app.get("/prices", async (req, res) => {
     const parsed = JSON.parse(jsonString);
 
     const keys = ["BTC", "ETH", "SOL"];
-    const valid = keys.every(k => parsed[k] && parsed[k] !== "xxxxx");
+    const valid = keys.every(k => parsed[k] && !parsed[k].includes("xxxxx"));
 
     if (valid) return res.json(parsed);
 
-    // Fallback: Fetch from CoinGecko if GPT fails
-    const coingecko = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd"
-    ).then(r => r.json());
-
-    const fallback = {
-      BTC: coingecko.bitcoin.usd.toFixed(2),
-      ETH: coingecko.ethereum.usd.toFixed(2),
-      SOL: coingecko.solana.usd.toFixed(2),
-    };
-
-    res.json(fallback);
+    throw new Error("GPT returned placeholder values, falling back...");
   } catch (err) {
-    console.error("❌ /prices error:", err.message);
-    res.status(500).json({ BTC: "Error", ETH: "Error", SOL: "Error" });
+    console.warn("⚠️ GPT failed, using CoinGecko fallback:", err.message);
+    try {
+      const cg = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd"
+      ).then(res => res.json());
+
+      const fallback = {
+        BTC: cg.bitcoin.usd.toFixed(2),
+        ETH: cg.ethereum.usd.toFixed(2),
+        SOL: cg.solana.usd.toFixed(2),
+      };
+      return res.json(fallback);
+    } catch (fallbackErr) {
+      console.error("❌ CoinGecko fallback failed:", fallbackErr.message);
+      return res.status(500).json({ BTC: "Error", ETH: "Error", SOL: "Error" });
+    }
   }
 });
 
-// ✅ Route: /pulseit
-app.get("/pulseit", async (req, res) => {
-  try {
-    const pulse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are CrimznBot, a fast-paced crypto analyst with edge. Reply with short alpha-packed bullet points only. No intros, no disclaimers."
-        },
-        {
-          role: "user",
-          content: "Pulse the markets"
-        }
-      ],
-      temperature: 0.6,
-    });
-
-    res.send(pulse.choices[0].message.content);
-  } catch (err) {
-    console.error("❌ /pulseit error:", err.message);
-    res.status(500).send("PulseIt error");
-  }
+// ✅ Route: /pulseIt.json
+app.get("/pulseIt.json", (req, res) => {
+  const filePath = path.join(__dirname, "public", "pulseIt.json");
+  fs.readFile(filePath, "utf8", (err, data) => {
+    if (err) return res.status(500).json({ error: "Failed to read PulseIt" });
+    try {
+      const parsed = JSON.parse(data);
+      res.json(parsed);
+    } catch (parseErr) {
+      res.status(500).json({ error: "Invalid PulseIt JSON" });
+    }
+  });
 });
 
 // ✅ Route: /whitepaper
 app.get("/whitepaper", (req, res) => {
-  const pdfPath = path.join(__dirname, "public", "whitepaper.pdf");
-  if (fs.existsSync(pdfPath)) {
-    res.sendFile(pdfPath);
-  } else {
-    res.status(404).send("Whitepaper not found.");
-  }
+  res.sendFile(path.join(__dirname, "public", "whitepaper.html"));
 });
 
 // ✅ Route: /blog/:date
 app.get("/blog/:date", (req, res) => {
-  const blogPath = path.join(__dirname, "public", "blog", `${req.params.date}.html`);
-  if (fs.existsSync(blogPath)) {
+  const { date } = req.params;
+  const blogPath = path.join(__dirname, "public", "blog", `${date}.html`);
+  fs.access(blogPath, fs.constants.F_OK, (err) => {
+    if (err) return res.status(404).send("Blog not found");
     res.sendFile(blogPath);
-  } else {
-    res.status(404).send("Blog post not found.");
-  }
-});
-
-// ✅ Route: /ask
-app.post("/ask", async (req, res) => {
-  const question = req.body.question || "";
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are CrimznBot, a macro crypto strategist blending Raoul Pal's liquidity models, Cathie Wood's tech vision, and Michael Saylor's BTC thesis. Give sharp, strategic answers—no fluff."
-        },
-        {
-          role: "user",
-          content: question
-        }
-      ],
-      temperature: 0.5,
-    });
-
-    res.json({ answer: completion.choices[0].message.content });
-  } catch (err) {
-    console.error("❌ /ask error:", err.message);
-    res.status(500).json({ answer: "CrimznBot is recharging..." });
-  }
+  });
 });
 
 app.listen(PORT, () => {
