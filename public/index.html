@@ -2,17 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CryptoConsult by Crimzn</title>
   <link rel="stylesheet" href="style.css" />
-  <script>
-    window.solana = window.solana || {};
-  </script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div id="wallet-status" style="position:absolute;top:10px;right:10px;color:#f7931a;"></div>
+  <div id="wallet-status" style="position:absolute;top:10px;right:10px;"></div>
 
-  <h1>CryptoConsult by Crimzn</h1>
-  <p>🧠 Real-time guidance, price tracking, and sentiment powered by CrimznBot</p>
+  <h1>CryptoConsult by <span class="orange">Crimzn</span></h1>
+  <p class="center orange">🧠 Real-time crypto consulting powered by GPT-4o & onchain tools</p>
 
   <div id="prices">
     <strong>BTC:</strong> <span id="btc-price">Loading...</span> |
@@ -20,24 +19,26 @@
     <strong>SOL:</strong> <span id="sol-price">Loading...</span>
   </div>
 
-  <div id="chat"></div>
+  <div id="chat-box"></div>
   <input id="question" placeholder="Ask CrimznBot anything..." />
   <button onclick="askQuestion()">Ask</button>
 
-  <div class="wallet-controls">
-    <button id="connect-btn">🔌 Connect Wallet</button>
-    <button id="disconnect-btn" style="display:none;">❌ Disconnect</button>
+  <div id="payment-options" style="display: none;">
+    <h2>🔒 CrimznBot Access Locked</h2>
+    <p>You’ve used your 3 free questions. Unlock more with a payment below:</p>
+    <button onclick="connectWallet()">🔌 Connect Phantom Wallet</button>
+    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b')">💸 Tip 1 USDC</button>
+    <button onclick="window.open('solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?amount=0.025&label=CrimznConsulting')">🟠 Pay 0.025 SOL</button>
   </div>
 
-<!-- 🔮 PulseIt Section -->
-<div id="pulseit-box" style="margin-top: 30px;">
-  <h3 style="color: #f7931a; font-family: Courier New;">PulseIt Sentiment</h3>
-  <input type="text" id="pulseit-input" placeholder="Enter topic (e.g., SOL, BTC, Trump)" style="padding: 8px; width: 60%;" />
-  <button onclick="submitPulseIt()" style="padding: 8px; background-color: #f7931a; border: none; color: white; font-family: Courier New;">Analyze</button>
-  <pre id="pulseit-result" style="margin-top: 15px; color: #00ff00; font-family: Courier New;"></pre>
-</div>
+  <div id="pulseit-box">
+    <h3>🔮 PulseIt Sentiment Engine</h3>
+    <input type="text" id="pulseit-input" placeholder="Enter a token or topic..." />
+    <button onclick="submitPulseIt()">📡 Pulse It</button>
+    <pre id="pulseit-result"></pre>
+  </div>
 
-  <h2>🛠️ Available Services</h2>
+  <h2>🛠️ Services Offered</h2>
   <ul>
     <li>📊 Technical & Fundamental Analysis</li>
     <li>💼 Portfolio Allocation Guidance</li>
@@ -45,31 +46,26 @@
     <li>📈 Trend Interpretation (Macro & On-Chain)</li>
   </ul>
 
-  <h2>📈 BTC Daily Blog</h2>
+  <h2>📄 Whitepaper & Blog</h2>
   <div class="links">
-    <a href="blog.html" class="button">📈 View BTC Blog</a>
+    <a href="whitepaper.html" class="button">📜 View Whitepaper</a>
+    <a href="whitepaper.pdf" download class="button">⬇ Download Whitepaper</a>
+    <a href="blog.html" class="button">📅 BTC Daily Blog</a>
   </div>
 
-  <h2>📜 Whitepaper</h2>
+  <h2>💳 Support & Payments</h2>
   <div class="links">
-    <a href="whitepaper.html" class="button">📜 View Whitepaper</a><br/>
-    <a href="whitepaper.pdf" download class="button">⬇ Download Whitepaper (PDF)</a>
-  </div>
-
-  <h2>💸 Support & Payments</h2>
-  <div class="links">
-    <a href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8" target="_blank" class="button">Pay $99.99 for Services Rendered</a><br/>
-    <a href="solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?label=CryptoConsult&message=Access CrimznBot" class="button">Send Custom SOL (Paywall)</a>
-    <a href="https://paypal.me/crimzn" target="_blank" class="button">Pay with PayPal</a>
+    <a href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8" class="button">💵 Book a Consultation ($99.99 USDC)</a>
+    <a href="solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF" class="button">🔓 Pay Any Amount in SOL</a>
+    <a href="https://paypal.me/crimzn" class="button">🅿️ Pay with PayPal</a>
   </div>
 
   <h2>📬 Contact Me</h2>
   <div class="links">
     <a href="mailto:crimzncipriano@gmail.com" class="button">📧 Email</a>
-    <a href="https://t.me/Crimznbot" target="_blank" class="button">💬 Telegram</a>
+    <a href="https://t.me/Crimznbot" class="button">💬 Telegram</a>
   </div>
 
-
-  <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
