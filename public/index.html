@@ -2,44 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CryptoConsult by Crimzn</title>
   <style>
     body {
-      background: #000;
+      background-color: #000;
       color: #f7931a;
-      font-family: 'Courier New', monospace;
+      font-family: Courier New, monospace;
       text-align: center;
-      padding: 20px;
-    }
-    h1, h2 {
-      margin-bottom: 10px;
-    }
-    #wallet-status {
-      margin: 10px;
     }
     button {
+      padding: 10px 20px;
       margin: 5px;
-      padding: 8px 16px;
-      font-family: inherit;
-      font-size: 14px;
-      border: none;
-      border-radius: 5px;
+      font-size: 16px;
       cursor: pointer;
     }
-    #connect-btn { background-color: #00ff00; color: black; }
-    #disconnect-btn { background-color: #ff0040; color: white; display: none; }
-    .message {
-      margin: 10px 0;
-    }
-    .user { color: #f7931a; }
-    .bot { color: #00ff00; }
-    .links a {
-      display: block;
-      color: #0af;
-      margin: 4px 0;
-      text-decoration: underline;
-    }
+    .green-text { color: lime; }
+    .message { margin: 10px 0; }
+    .message.user { color: orange; }
+    .message.bot { color: lime; }
+    a { color: #0af; text-decoration: underline; }
     input[type="text"] {
       padding: 8px;
       width: 80%;
@@ -50,27 +31,28 @@
 </head>
 <body>
   <h1>CryptoConsult by Crimzn</h1>
+
   <!-- Wallet Connect -->
-<button id="connect-btn">Connect Wallet</button>
-<button id="disconnect-btn" style="display:none;">Disconnect</button>
-<div id="wallet-status">Not Connected</div>
+  <button id="connect-btn" style="background-color: limegreen;">Connect Wallet</button>
+  <button id="disconnect-btn" style="display:none; background-color: crimson;">Disconnect</button>
+  <div id="wallet-status">Not Connected</div>
 
   <!-- Prices -->
-  <h2>Live Prices</h2>
+  <h2>📉 Live Prices</h2>
   <div>BTC: <span id="btc-price">Loading...</span></div>
   <div>ETH: <span id="eth-price">Loading...</span></div>
   <div>SOL: <span id="sol-price">Loading...</span></div>
 
-<!-- CrimznBot -->
-<h2>Talk to CrimznBot</h2>
-<div id="chat"></div>
-<input type="text" id="question-input" placeholder="Ask CrimznBot anything..." />
-<button id="ask-btn">Ask</button> <!-- ✅ Let script.js handle the click -->
+  <!-- CrimznBot -->
+  <h2>🧠 Talk to CrimznBot</h2>
+  <div id="chat" style="min-height: 100px; margin-bottom: 10px;"></div>
+  <input type="text" id="question-input" placeholder="Ask CrimznBot anything..." />
+  <button id="ask-btn">Ask</button>
 
   <!-- PulseIt -->
   <h2>🔮 PulseIt Sentiment Engine</h2>
   <input type="text" id="pulseit-input" placeholder="Enter a token or topic..." />
-  <button onclick="submitPulseIt()">📡 Pulse It</button>
+  <button id="pulseit-btn">📡 Pulse It</button>
   <div id="pulseit-result" style="margin-top: 10px;"></div>
 
   <!-- Services -->
@@ -82,29 +64,21 @@
     <li>📈 Trend Interpretation (Macro & On-Chain)</li>
   </ul>
 
-  <!-- Whitepaper & Blog -->
-  <h2>📜 Whitepaper & Blog</h2>
-  <div class="links">
-    <a href="whitepaper.html" class="button">📜 View Whitepaper</a>
-    <a href="whitepaper.pdf" download class="button">⬇ Download Whitepaper</a>
-    <a href="blog.html" class="button">📅 BTC Daily Blog</a>
-  </div>
-
   <!-- Payments -->
   <h2>💸 Support & Payments</h2>
   <div class="links">
-    <a href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8" class="button">🪙 Book a Consultation ($99.99 USDC)</a>
-    <a href="solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?amount=0.025&label=CrimznConsulting" class="button">🔐 Pay Any Amount in SOL</a>
-    <a href="https://paypal.me/crimzn" class="button">🅿️ Pay with PayPal</a>
+    <a href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8" class="button">🪙 Book a Consultation</a><br>
+    <a href="https://paypal.me/crimzn" class="button">🅿️ Pay with PayPal</a><br>
+    <a href="solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?amount=0.025&label=CrimznConsulting" class="button">🔐 Pay 0.025 SOL</a>
   </div>
 
-  <!-- Contact -->
-  <h2>📬 Contact Me</h2>
-  <div class="links">
-    <a href="mailto:crimzncipriano@gmail.com" class="button">📧 Email</a>
-    <a href="https://t.me/Crimznbot" class="button">💬 Telegram</a>
-  </div>
+  <!-- Whitepaper & Blog -->
+  <h2>📄 Project Documents</h2>
+  <a href="whitepaper.pdf" download>📥 Download Whitepaper PDF</a><br>
+  <a href="whitepaper.html" target="_blank">📖 View Whitepaper in Browser</a><br><br>
 
+  <a href="blog/2025-06-13.html" target="_blank">📰 Read Latest Blog Post</a>
+
+  <script src="script.js"></script>
 </body>
-<script src="script.js"></script>
 </html>
