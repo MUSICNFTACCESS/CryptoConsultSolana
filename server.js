@@ -73,7 +73,6 @@ app.get("/prices", async (req, res) => {
   }
 });
 
-// ✅ /pulseit route
 app.get("/pulseit", async (req, res) => {
   try {
     const pulse = await openai.chat.completions.create({
@@ -94,6 +93,35 @@ app.get("/pulseit", async (req, res) => {
     const pulseMsg = pulse.choices[0].message.content;
     res.send(`<h2 style="font-family:monospace;color:#f7931a;">📣 PulseIt:</h2><p>${pulseMsg}</p>`);
   } catch (err) {
+    res.status(500).send("PulseIt is offline.");
+  }
+});
+
+// ✅ PulseIt: Sentiment analysis on any topic via GPT
+app.get("/pulseit", async (req, res) => {
+  const topic = req.query.topic || "crypto";
+  try {
+    const pulse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are CrimznBot, a sentiment analysis expert in crypto and macroeconomics. Based on insights from Raoul Pal, Cathie Wood, and Michael Saylor, analyze any topic and return a one-word sentiment: 'Bullish', 'Bearish', or 'Neutral', followed by 1 line of strategic reasoning."
+        },
+        {
+          role: "user",
+          content: `What's the sentiment on: ${topic}?`
+        }
+      ],
+      temperature: 0.4
+    });
+
+    const pulseMsg = pulse.choices[0].message.content;
+    console.log("📣 PulseIt:", pulseMsg);
+    res.send(`<h2 style="font-family:monospace;color:#f7931a;">📊 PulseIt:</h2><p>${pulseMsg}</p>`);
+  } catch (err) {
+    console.error("❌ PulseIt error:", err.message);
     res.status(500).send("PulseIt is offline.");
   }
 });
