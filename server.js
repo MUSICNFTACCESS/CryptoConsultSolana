@@ -65,7 +65,7 @@ app.post("/ask", async (req, res) => {
 });
 
 
-// ✅ Route: /prices -> GPT-4o with JSON fallback parsing
+kk// ✅ Route: /prices -> GPT-4o with JSON fallback parsing
 app.get("/prices", async (req, res) => {
   try {
     const completion = await openai.chat.completions.create({
