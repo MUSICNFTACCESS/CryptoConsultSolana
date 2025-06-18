@@ -22,22 +22,30 @@ const aliasMap = {
   pyth: "pyth-network",
 };
 
-async function fetchCryptoPrice(term) {
+async function fetchCryptoPrice(term, question) {
+  const aliasMap = {
+    btc: "bitcoin",
+    eth: "ethereum",
+    sol: "solana"
+  };
+
   const id = aliasMap[term.toLowerCase()] || term.toLowerCase();
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`;
+  const url = `https://api.coingecko.com/api/v3/coins/${id}`;
 
   try {
     const res = await fetch(url);
-    const json = await res.json();
-    const price = json[id]?.usd;
+    const data = await res.json();
+    const price = data.market_data.current_price.usd;
+    const marketCap = data.market_data.market_cap.usd;
 
-    if (price) {
-      return `The current price of ${term.toUpperCase()} is $${price.toLocaleString()}`;
+    // Smart response logic
+    if (question.toLowerCase().includes("marketcap") || question.toLowerCase().includes("market cap")) {
+      return `🤖 The current market cap of ${id.toUpperCase()} is approximately $${marketCap.toLocaleString()}.`;
     } else {
-      return null;
+      return `🤖 The current price of ${id.toUpperCase()} is $${price.toLocaleString()}.`;
     }
-  } catch {
-    return null;
+  } catch (error) {
+    return `🤖 Sorry, I couldn't fetch the price for ${term.toUpperCase()} at the moment.`;
   }
 }
 
