@@ -1,1 +1,1 @@
-fix: final clean JSON for Render deploy Tue Jun 17 22:45:24 EDT 2025
+fix: locked openai to v4.20.0 for compatibility Tue Jun 17 22:53:36 EDT 2025
