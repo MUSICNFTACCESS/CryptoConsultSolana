@@ -1,1 +1,1 @@
-redeploy: FINAL BUILD - CrimznBot + PulseIt full stack restored Tue Jun 17 22:22:35 EDT 2025
+fix: switched start script to node server.js for backend launch Tue Jun 17 22:36:40 EDT 2025
