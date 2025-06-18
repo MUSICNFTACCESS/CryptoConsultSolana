@@ -1,1 +1,1 @@
-fix: switched start script to node server.js for backend launch Tue Jun 17 22:36:40 EDT 2025
+fix: final clean JSON for Render deploy Tue Jun 17 22:45:24 EDT 2025
