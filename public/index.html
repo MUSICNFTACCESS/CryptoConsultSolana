@@ -59,48 +59,88 @@
   </style>
 </head>
 <body>
+
+  <!-- 🔓 Wallet Connect -->
+  <button id="connect-wallet-btn">🔓 Connect Wallet</button>
+  <p id="wallet-address" style="color:#0f0;"></p>
+
+  <!-- 🧠 Branding -->
   <h1>CryptoConsult by Crimzn</h1>
   <h3>Web3 Consulting Powered by AI + Onchain Tools</h3>
 
+  <!-- 💰 Live Prices -->
   <div id="live-prices">
     <p><strong>Live Prices:</strong></p>
-    <div id="prices">BTC: $-- | ETH: $-- | SOL: $--</div>
+    BTC: <span id="btc-price">$--</span> |
+    ETH: <span id="eth-price">$--</span> |
+    SOL: <span id="sol-price">$--</span>
   </div>
 
-  <h3>Available Services:</h3>
-  <ul>
-    <li>🧠 Technical Analysis (Crypto/Stocks)</li>
-    <li>🔐 Wallet Setup & Onramping</li>
-    <li>⚖️ Risk Management</li>
-    <li>📩 Portfolio Strategy</li>
-    <li>🪙 Token + dApp Support</li>
-  </ul>
-
+  <!-- 💵 Payment Options -->
   <h3>Support & Payments:</h3>
-  <a class="button" href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8">Pay $99.99 for Services Rendered</a>
-  <a class="button" href="https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b">Tip 1 USDC</a>
-  <a class="button" href="https://crypto-consult.onrender.com/whitepaper.html">📄 View Whitepaper</a>
-  <a class="button" href="https://crypto-consult.onrender.com/blog.html">📅 BTC Daily Blog</a>
-  <a class="button" href="https://t.me/CrimznBot" target="_blank">📬 Contact via Telegram</a>
+  <div id="payment-options">
+    <button onclick="window.open('https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f98664fbd8f')">🧾 Book a Consultation - 99.99 USDC</button>
+    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-427b-b0e2-e721bb640b32')">💸 Send Tip - 1 USDC</button>
+    <button onclick="window.open('https://paypal.me/crimzn')">💳 Pay with PayPal</button>
+    <button onclick="window.open('https://solana.com/pay/CobfxH4pqytTCbzjhoaTS6393XiDk2uwocSmsa54F')">🟢 Pay with Solana</button>
+  </div>
 
+  <!-- 🤖 CrimznBot -->
   <h3>Talk to CrimznBot:</h3>
   <div id="chat-box"></div>
   <input type="text" id="user-input" placeholder="Ask a crypto question..." />
   <br />
   <button id="send-button">Send</button>
 
+  <!-- 📝 Blog / Links -->
   <div id="payment-options">
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8')">Pay $99.99 for Services Rendered</button>
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b')">Tip 1 USDC</button>
-    <button onclick="window.open('https://crypto-consult.onrender.com/whitepaper.html')">View Whitepaper</button>
-    <button onclick="window.open('https://crypto-consult.onrender.com/blog.html')">BTC Daily Blog</button>
+    <button onclick="window.open('https://crypto-consult.onrender.com/whitepaper.html')">📄 View Whitepaper</button>
+    <button onclick="window.open('https://crypto-consult.onrender.com/blog.html')">📆 BTC Daily Blog</button>
     <button onclick="window.open('https://t.me/CrimznBot')">📬 Contact via Telegram</button>
   </div>
 
+  <!-- 📊 Alpha Pulse Tracker -->
   <h3>Alpha Pulse Tracker+</h3>
   <input type="text" id="sentiment-query" placeholder="Enter token or term..." />
   <button onclick="getSentiment()">🔍 Pulse It</button>
   <div id="sentiment-result"></div>
+
+  <!-- 🧠 Scripts -->
+  <script>
+    async function fetchPrices() {
+      try {
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
+        const data = await res.json();
+        document.getElementById("btc-price").textContent = "$" + data.bitcoin.usd.toLocaleString();
+        document.getElementById("eth-price").textContent = "$" + data.ethereum.usd.toLocaleString();
+        document.getElementById("sol-price").textContent = "$" + data.solana.usd.toLocaleString();
+      } catch (error) {
+        document.getElementById("btc-price").textContent = "$Error";
+        document.getElementById("eth-price").textContent = "$Error";
+        document.getElementById("sol-price").textContent = "$Error";
+      }
+    }
+
+    async function connectPhantomWallet() {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const resp = await window.solana.connect();
+          const pubkey = resp.publicKey.toString();
+          document.getElementById("wallet-address").textContent = "Connected: " + pubkey;
+        } catch (err) {
+          console.error("User rejected connection:", err);
+        }
+      } else {
+        alert("Phantom Wallet not detected. Please install it.");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("connect-wallet-btn").addEventListener("click", connectPhantomWallet);
+      fetchPrices();
+      setInterval(fetchPrices, 60000);
+    });
+  </script>
 
   <script src="script.js"></script>
 </body>

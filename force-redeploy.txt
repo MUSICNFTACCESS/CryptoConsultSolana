@@ -1,1 +1,1 @@
-🧠 Sync: Restored known working public folder from Crypto-Consult Wed Jun 18 08:31:21 EDT 2025
+✅ Update: Final working version with wallet connect, prices, and payments Wed Jun 18 10:28:24 EDT 2025
