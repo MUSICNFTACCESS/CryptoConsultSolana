@@ -2,145 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CryptoConsult by Crimzn</title>
   <style>
     body {
-      margin: 0;
-      padding: 1rem;
       background-color: #000;
       color: #f7931a;
       font-family: Courier, monospace;
       text-align: center;
+      padding: 20px;
     }
-    h1, h2, h3 {
-      margin: 1rem 0 0.5rem;
-    }
-    button, a.button {
-      background-color: #f7931a;
-      color: #000;
-      border: none;
-      padding: 0.6rem 1rem;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
-      margin: 0.3rem;
-      display: inline-block;
-    }
-    #chat-box {
-      max-width: 600px;
-      margin: 1rem auto;
-      padding: 1rem;
+    .button {
+      margin: 10px;
+      padding: 10px 20px;
       background-color: #111;
-      border-radius: 8px;
-      min-height: 80px;
-    }
-    .user { color: #f7931a; }
-    .bot { color: #0f0; margin-top: 0.3rem; }
-    input, textarea {
-      width: 90%;
-      padding: 0.5rem;
-      margin-top: 1rem;
+      color: #f7931a;
+      border: 1px solid #f7931a;
+      cursor: pointer;
       border-radius: 6px;
-      border: none;
-    }
-    #payment-options {
-      display: none;
-      margin-top: 1rem;
-    }
-    #live-prices, #sentiment-result {
-      margin-bottom: 1rem;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
     }
   </style>
 </head>
 <body>
   <h1>CryptoConsult by Crimzn</h1>
-  <h3>Web3 Consulting Powered by AI + Onchain Tools</h3>
+  <h3>Live Prices:</h3>
+  <div>BTC: <span id="btc-price">Loading...</span></div>
+  <div>ETH: <span id="eth-price">Loading...</span></div>
+  <div>SOL: <span id="sol-price">Loading...</span></div>
 
-  <!-- 🔐 Wallet Connect -->
-  <button id="connect-wallet-btn">🔐 Connect Wallet</button>
-  <button id="disconnect-wallet-btn" style="display:none;">❌ Disconnect</button>
-  <p id="wallet-address" style="color:#0f0;"></p>
-
-  <!-- 📈 Live Prices -->
-  <div id="live-prices">
-    <p><strong>Live Prices:</strong></p>
-    <div id="prices">BTC: $-- | ETH: $-- | SOL: $--</div>
-  </div>
-
-  <!-- 💼 Services -->
-  <h3>Available Services:</h3>
-  <ul>
-    <li>🧠 Technical Analysis (Crypto/Stocks)</li>
-    <li>🔐 Wallet Setup & Onramping</li>
-    <li>⚖️ Risk Management</li>
-    <li>📩 Portfolio Strategy</li>
-    <li>🪙 Token + dApp Support</li>
-  </ul>
-
-  <!-- 💸 Payments -->
-  <h3>Support & Payments:</h3>
-  <a class="button" href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8">Pay $99.99 for Services Rendered</a>
-  <a class="button" href="https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b">Tip 1 USDC</a>
-  <button style="background-color: purple; color: white;" onclick="window.open('solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?amount=0.025&label=CryptoConsult&message=Consultation%20Payment')">🟣 Pay with Solana</button>
-  <a class="button" href="https://crypto-consult.onrender.com/whitepaper.html">📄 View Whitepaper</a>
-  <a class="button" href="https://crypto-consult.onrender.com/blog.html">📅 BTC Daily Blog</a>
-  <a class="button" href="https://t.me/CrimznBot" target="_blank">📬 Contact via Telegram</a>
-
-  <!-- 🤖 CrimznBot -->
   <h3>Talk to CrimznBot:</h3>
   <div id="chat-box"></div>
-  <input type="text" id="user-input" placeholder="Ask a crypto question..." />
+  <input type="text" id="user-input" placeholder="Ask a crypto question" />
   <br />
-  <button id="send-button">Send</button>
+  <button id="send-button" class="button">Send</button>
 
-  <!-- 🚧 Paywall Options -->
   <div id="payment-options">
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8')">Pay $99.99 for Services Rendered</button>
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b')">Tip 1 USDC</button>
-    <button onclick="window.open('solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?amount=0.025&label=CryptoConsult&message=Consultation%20Payment')">🟣 Pay with Solana</button>
+    <button onclick="window.open('https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8')">💸 Pay $99.99 USDC</button>
+    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b')">🪙 Tip 1 USDC</button>
+    <button onclick="window.open('solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF')">🔓 Pay with Solana</button>
     <button onclick="window.open('https://t.me/CrimznBot')">📬 Contact via Telegram</button>
   </div>
 
-  <!-- 🔍 Alpha Pulse Tracker -->
   <h3>Alpha Pulse Tracker+</h3>
-  <input type="text" id="sentiment-query" placeholder="Enter token or term..." />
-  <button onclick="getSentiment()">🔍 Pulse It</button>
+  <input type="text" id="sentiment-query" placeholder="Enter token or topic" />
+  <button onclick="getSentiment()" class="button">🔍 Pulse It</button>
   <div id="sentiment-result"></div>
 
-  <!-- ⚙️ Scripts -->
-  <script src="script.js?v=crimznpush"></script>
   <script>
-    async function connectPhantomWallet() {
-      if (window.solana && window.solana.isPhantom) {
-        try {
-          const resp = await window.solana.connect();
-          const pubkey = resp.publicKey.toString();
-          const shortKey = pubkey.slice(0, 6) + "..." + pubkey.slice(-4);
-          document.getElementById("wallet-address").textContent = "Connected: " + shortKey;
-          document.getElementById("connect-wallet-btn").style.display = "none";
-          document.getElementById("disconnect-wallet-btn").style.display = "inline-block";
-        } catch (err) {
-          console.error("User rejected connection:", err);
-        }
-      } else {
-        alert("Phantom Wallet not detected. Please install it.");
+    document.getElementById("send-button").onclick = async () => {
+      const input = document.getElementById("user-input").value;
+      const chatBox = document.getElementById("chat-box");
+      chatBox.innerText = "🤖 Thinking...";
+      const res = await fetch("https://cryptoconsultsolana.onrender.com/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: input }),
+      });
+      const data = await res.json();
+      chatBox.innerText = "🤖 " + data.answer;
+    };
+
+    async function getSentiment() {
+      const input = document.getElementById("sentiment-query").value;
+      const result = document.getElementById("sentiment-result");
+      result.innerText = "📡 Analyzing...";
+      const res = await fetch("https://cryptoconsultsolana.onrender.com/sentiment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: input }),
+      });
+      const data = await res.json();
+      result.innerText = "📈 Sentiment: " + data.sentiment;
+    }
+
+    async function loadPrices() {
+      try {
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
+        const prices = await res.json();
+        document.getElementById("btc-price").innerText = "$" + prices.bitcoin.usd;
+        document.getElementById("eth-price").innerText = "$" + prices.ethereum.usd;
+        document.getElementById("sol-price").innerText = "$" + prices.solana.usd;
+      } catch {
+        document.getElementById("btc-price").innerText = "n/a";
+        document.getElementById("eth-price").innerText = "n/a";
+        document.getElementById("sol-price").innerText = "n/a";
       }
     }
 
-    function disconnectWallet() {
-      document.getElementById("wallet-address").textContent = "";
-      document.getElementById("connect-wallet-btn").style.display = "inline-block";
-      document.getElementById("disconnect-wallet-btn").style.display = "none";
-    }
-
-    document.getElementById("connect-wallet-btn").addEventListener("click", connectPhantomWallet);
-    document.getElementById("disconnect-wallet-btn").addEventListener("click", disconnectWallet);
+    window.onload = loadPrices;
   </script>
 </body>
 </html>
