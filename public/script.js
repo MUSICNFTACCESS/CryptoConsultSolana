@@ -47,20 +47,6 @@ input.addEventListener("keypress", (e) => {
   }
 });
 
-// 🟦 Fetch crypto prices from backend proxying CoinGecko
-async function fetchPrices() {
-  try {
-    const res = await fetch("https://crypto-consult.onrender.com/prices");
-    const data = await res.json();
-    pricesDiv.innerText = `BTC: $${data.btc.toLocaleString()} | ETH: $${data.eth.toLocaleString()} | SOL: $${data.sol.toLocaleString()}`;
-  } catch (err) {
-    pricesDiv.innerText = "Price fetch error";
-  }
-}
-
-fetchPrices();
-setInterval(fetchPrices, 60000);
-
 // 🔍 Alpha Pulse Tracker+
 window.getSentiment = async function () {
   const query = sentimentQuery?.value?.trim();
