@@ -17,8 +17,8 @@ async function handleCrimznBot(question) {
 
   if (questionCount >= maxFreeQuestions) {
     chatBox.innerHTML += `
-      <div class="bot">⚠️ Free limit reached. 
-      Please <a class="button" href="https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b" target="_blank">Tip 1 USDC</a>
+      <div class="bot">⚠️ Free limit reached.
+      Please <a class="button" href="https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b" target="_blank">Tip 1 USDC</a>          
       or <a class="button" href="https://t.me/CrimznBot" target="_blank">📬 Contact Crimzn</a>
       </div>
     `;
@@ -27,7 +27,7 @@ async function handleCrimznBot(question) {
   }
 
   try {
-    const res = await fetch("https://crypto-consult.onrender.com/ask", {
+    const res = await fetch("https://cryptoconsultsolana.onrender.com/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question })
@@ -85,7 +85,7 @@ async function getSentiment() {
   sentimentResult.innerText = `🔍 Analyzing sentiment for "${query}"...`;
 
   try {
-    const res = await fetch("https://crypto-consult.onrender.com/api/sentiment", {
+    const res = await fetch("https://cryptoconsultsolana.onrender.com/sentiment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query })
