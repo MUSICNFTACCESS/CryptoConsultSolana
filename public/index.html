@@ -60,11 +60,12 @@
 </head>
 <body>
 
-  <!-- 🔓 Wallet Connect -->
-  <button id="connect-wallet-btn">🔓 Connect Wallet</button>
-  <p id="wallet-address" style="color:#0f0;"></p>
+<!-- 🔓 Wallet Connect -->
+<button id="connect-wallet-btn">🔓 Connect Wallet</button>
+<button id="disconnect-wallet-btn" style="display:none;">❌ Disconnect</button>
+<p id="wallet-address" style="color:#0f0;"></p>
 
-  <!-- 🧠 Branding -->
+  <!-- 🧠 🔓Branding -->
   <h1>CryptoConsult by Crimzn</h1>
   <h3>Web3 Consulting Powered by AI + Onchain Tools</h3>
 
@@ -108,41 +109,53 @@
   <div id="sentiment-result"></div>
 
   <!-- 🧠 Scripts -->
-  <script>
-        async function fetchPrices() {
+<script>
+  async function fetchPrices() {
+    try {
+      const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
+      const data = await res.json();
+      document.getElementById("btc-price").textContent = "$" + data.bitcoin.usd.toLocaleString();
+      document.getElementById("eth-price").textContent = "$" + data.ethereum.usd.toLocaleString();
+      document.getElementById("sol-price").textContent = "$" + data.solana.usd.toLocaleString();
+    } catch (error) {
+      document.getElementById("btc-price").textContent = "$Error";
+      document.getElementById("eth-price").textContent = "$Error";
+      document.getElementById("sol-price").textContent = "$Error";
+    }
+  }
+
+  async function connectPhantomWallet() {
+    if (window.solana && window.solana.isPhantom) {
       try {
-        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
-        const data = await res.json();
-        document.getElementById("btc-price").textContent = "$" + data.bitcoin.usd.toLocaleString();
-        document.getElementById("eth-price").textContent = "$" + data.ethereum.usd.toLocaleString();
-        document.getElementById("sol-price").textContent = "$" + data.solana.usd.toLocaleString();
-      } catch (error) {
-        document.getElementById("btc-price").textContent = "$Error";
-        document.getElementById("eth-price").textContent = "$Error";
-        document.getElementById("sol-price").textContent = "$Error";
+        const resp = await window.solana.connect();
+        const pubkey = resp.publicKey.toString();
+        const shortKey = pubkey.slice(0, 6) + "..." + pubkey.slice(-4);
+        document.getElementById("wallet-address").textContent = "Connected: " + shortKey;
+        document.getElementById("connect-wallet-btn").style.display = "none";
+        document.getElementById("disconnect-wallet-btn").style.display = "inline-block";
+      } catch (err) {
+        console.error("User rejected connection:", err);
       }
+    } else {
+      alert("Phantom Wallet not detected. Please install it.");
     }
+  }
 
-    async function connectPhantomWallet() {
-      if (window.solana && window.solana.isPhantom) {
-        try {
-          const resp = await window.solana.connect();
-          const pubkey = resp.publicKey.toString();
-          document.getElementById("wallet-address").textContent = "Connected: " + pubkey;
-        } catch (err) {
-          console.error("User rejected connection:", err);
-        }
-      } else {
-        alert("Phantom Wallet not detected. Please install it.");
-      }
-    }
+  function disconnectWallet() {
+    document.getElementById("wallet-address").textContent = "";
+    document.getElementById("connect-wallet-btn").style.display = "inline-block";
+    document.getElementById("disconnect-wallet-btn").style.display = "none";
+  }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("connect-wallet-btn").addEventListener("click", connectPhantomWallet);
-      fetchPrices();
-      setInterval(fetchPrices, 60000);
-    });
-  </script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("connect-wallet-btn").addEventListener("click", connectPhantomWallet);
+    document.getElementById("disconnect-wallet-btn").addEventListener("click", disconnectWallet);
+    fetchPrices();
+    setInterval(fetchPrices, 60000);
+  });
+</script>
+
+
 
   <script src="script.js"></script>
 </body>
