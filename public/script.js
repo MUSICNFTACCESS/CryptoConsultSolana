@@ -1,77 +1,84 @@
-// 🔁 Load Prices from GPT or CoinGecko
-async function getPrices() {
+let questionCount = 0;
+const maxQuestions = 3;
+
+const askBtn = document.getElementById("askBtn");
+const askInput = document.getElementById("askInput");
+const responseDiv = document.getElementById("response");
+
+const pulseBtn = document.getElementById("pulseBtn");
+const pulseInput = document.getElementById("pulseInput");
+const pulseResponse = document.getElementById("pulseResponse");
+
+async function fetchPrices() {
   try {
     const res = await fetch("/prices");
     const data = await res.json();
-    updatePriceUI(data.BTC, data.ETH, data.SOL);
+    document.getElementById("btc").textContent = `$${data.BTC}`;
+    document.getElementById("eth").textContent = `$${data.ETH}`;
+    document.getElementById("sol").textContent = `$${data.SOL}`;
   } catch {
-    updatePriceUI("Error", "Error", "Error");
+    document.getElementById("btc").textContent = "Error";
+    document.getElementById("eth").textContent = "Error";
+    document.getElementById("sol").textContent = "Error";
   }
 }
 
-function updatePriceUI(btc, eth, sol) {
-  document.getElementById("btc-price").textContent = `$${btc}`;
-  document.getElementById("eth-price").textContent = `$${eth}`;
-  document.getElementById("sol-price").textContent = `$${sol}`;
-}
+askBtn.addEventListener("click", async () => {
+  if (!askInput.value.trim()) return;
 
-// 💬 CrimznBot Logic
-async function sendMessage() {
-  const input = document.getElementById("crimzn-input");
-  const chat = document.getElementById("chat-container");
-  const userMsg = input.value.trim();
-  if (!userMsg) return;
+  if (questionCount >= maxQuestions) {
+    responseDiv.innerHTML = `
+      <p><strong>Free limit reached.</strong></p>
+      <p><a href="https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b" target="_blank">💵 Pay $99.99 for Services Rendered</a></p>
+      <p><a href="https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8" target="_blank">☕ Send Tip (1 USDC)</a></p>
+      <p><a href="https://t.me/Crimznbot" target="_blank">📲 Contact Me via Telegram</a></p>
+    `;
+    return;
+  }
 
-  const userDiv = document.createElement("div");
-  userDiv.className = "message user";
-  userDiv.textContent = userMsg;
-  chat.appendChild(userDiv);
+  const msg = askInput.value;
+  askInput.value = "";
+  responseDiv.innerHTML = `<p style="color:orange;">You: ${msg}</p><p>CrimznBot: Typing...</p>`;
 
   try {
     const res = await fetch("/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: userMsg })
+      body: JSON.stringify({ message: msg })
     });
-    const data = await res.json();
-
-    const botDiv = document.createElement("div");
-    botDiv.className = "message bot";
-    botDiv.textContent = data.reply || "No reply received.";
-    chat.appendChild(botDiv);
-  } catch {
-    const botDiv = document.createElement("div");
-    botDiv.className = "message bot";
-    botDiv.textContent = "CrimznBot encountered an error.";
-    chat.appendChild(botDiv);
+    const txt = await res.text();
+    responseDiv.innerHTML = `<p style="color:orange;">You: ${msg}</p><p style="color:lime;">CrimznBot: ${txt}</p>`;
+    questionCount++;
+  } catch (err) {
+    responseDiv.innerHTML = `<p style="color:red;">Error contacting CrimznBot.</p>`;
   }
+});
 
-  input.value = "";
-}
-
-// 📡 PulseIt Logic (GPT-based)
-async function analyzePulseIt() {
-  const input = document.getElementById("pulseit-input").value.trim();
-  const output = document.getElementById("pulseit-response");
-  if (!input) return;
+pulseBtn.addEventListener("click", async () => {
+  const topic = pulseInput.value || "crypto";
+  pulseInput.value = "";
+  pulseResponse.innerHTML = "📡 Analyzing...";
 
   try {
-    const res = await fetch("/pulseit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input })
-    });
-    const data = await res.json();
-    output.textContent = `📡 PulseIt: ${data.sentiment}`;
+    const res = await fetch(`/pulseitTopic?topic=${encodeURIComponent(topic)}`);
+    const txt = await res.text();
+    pulseResponse.innerHTML = `📊 ${txt}`;
   } catch {
-    output.textContent = "PulseIt is offline or failed.";
+    pulseResponse.innerHTML = "⚠️ PulseIt offline.";
   }
-}
+});
 
-// 🔗 WalletConnect Placeholder
-function connectWallet() {
-  alert("WalletConnect logic coming soon — connection placeholder.");
-}
+window.onload = () => {
+  fetchPrices();
 
-// 🔄 Init
-getPrices();
+  if (window.solana && window.solana.isPhantom) {
+    document.getElementById("connectWalletBtn").addEventListener("click", async () => {
+      try {
+        const resp = await window.solana.connect();
+        alert(`✅ Connected: ${resp.publicKey.toString()}`);
+      } catch {
+        alert("❌ Wallet connection failed.");
+      }
+    });
+  }
+};
