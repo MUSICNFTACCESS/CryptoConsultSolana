@@ -1,151 +1,127 @@
-import express from "express";
-import OpenAI from "openai";
-import fetch from "node-fetch";
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const fetch = require('node-fetch');
+const { Configuration, OpenAIApi } = require("openai");
 
-dotenv.config();
+require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+const openai = new OpenAIApi(new Configuration({
+  apiKey: process.env.OPENAI_API_KEY
+}));
+
+// Serve main page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "public")));
-
-// ✅ Root route
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// ✅ Hybrid GPT + CoinGecko fallback /prices route
+// 📈 GPT + CoinGecko fallback
 app.get("/prices", async (req, res) => {
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const completion = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are CrimznBot, a macroeconomic crypto strategist drawing insights from Raoul Pal, Michael Saylor, and Cathie Wood. Always respond ONLY with live USD prices for BTC, ETH, and SOL in this exact JSON format: { \"BTC\": \"xxxxx.xx\", \"ETH\": \"xxxxx.xx\", \"SOL\": \"xxxxx.xx\" }. No extra text, no markdown."
+          content: "You are CrimznBot, a macroeconomic crypto strategist drawing insights from Raoul Pal, Michael Saylor, and Cathie Wood. Always respond with confidence. Return only USD prices."
         },
         {
           role: "user",
-          content: "What's the current USD price of BTC, ETH, and SOL?"
+          content: "What’s the current USD price of BTC, ETH, and SOL?"
         }
-      ],
-      temperature: 0.3
+      ]
     });
 
-    const raw = completion.choices[0].message.content;
-    console.log("🧠 GPT-4o Raw:", raw);
+    const reply = completion.data.choices[0].message.content;
+    if (reply.includes("xxxxx") || reply.includes("N/A")) throw new Error("Invalid GPT data");
 
-    const start = raw.indexOf("{");
-    const end = raw.lastIndexOf("}") + 1;
-    const jsonString = raw.slice(start, end);
-    const parsed = JSON.parse(jsonString);
+    const parsed = {
+      BTC: reply.match(/BTC.*?\$([\d,\.]+)/i)?.[1] ?? "N/A",
+      ETH: reply.match(/ETH.*?\$([\d,\.]+)/i)?.[1] ?? "N/A",
+      SOL: reply.match(/SOL.*?\$([\d,\.]+)/i)?.[1] ?? "N/A"
+    };
 
-    const valid = ["BTC", "ETH", "SOL"].every(
-      k => /^\d+(\.\d+)?$/.test(parsed[k])
-    );
-
-    if (valid) return res.json(parsed);
-
-    throw new Error("Invalid GPT data, triggering CoinGecko fallback.");
-  } catch (e) {
-    console.warn("⚠️ GPT failed or placeholder detected, using CoinGecko...");
+    res.json(parsed);
+  } catch {
     try {
-      const data = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd").then(res => res.json());
-      const fallback = {
-        BTC: data.bitcoin.usd.toFixed(2),
-        ETH: data.ethereum.usd.toFixed(2),
-        SOL: data.solana.usd.toFixed(2),
-      };
-      res.json(fallback);
-    } catch (err) {
-      console.error("❌ CoinGecko Fallback Failed:", err.message);
+      const fallback = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
+      const data = await fallback.json();
+      res.json({
+        BTC: data.bitcoin.usd,
+        ETH: data.ethereum.usd,
+        SOL: data.solana.usd
+      });
+    } catch {
       res.status(500).json({ BTC: "Error", ETH: "Error", SOL: "Error" });
     }
   }
 });
 
-app.get("/pulseit", async (req, res) => {
+// 💬 CrimznBot
+app.post("/ask", async (req, res) => {
+  const question = req.body.question || "";
   try {
-    const pulse = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are PulseIt, a rapid-fire market sentiment bot. Give a short bold summary of the crypto market sentiment in under 30 words."
+          content: `You are CrimznBot — a macro-aware crypto specialist like Raoul Pal, Michael Saylor, and Cathie Wood combined. You understand BTC, ETH, Solana, DeFi, ETFs, macro cycles, inflation, regulation, and sentiment. Speak confidently with a bit of edge. If asked for price, respond clearly. If asked about markets, offer thesis-based insight. Be professional, sharp, and slightly degen.`
         },
-        {
-          role: "user",
-          content: "What’s the current pulse of the crypto market?"
-        }
-      ],
-      temperature: 0.7
+        { role: "user", content: question }
+      ]
     });
 
-    const pulseMsg = pulse.choices[0].message.content;
-    res.send(`<h2 style="font-family:monospace;color:#f7931a;">📣 PulseIt:</h2><p>${pulseMsg}</p>`);
+    res.json({ reply: response.data.choices[0].message.content.trim() });
   } catch (err) {
-    res.status(500).send("PulseIt is offline.");
+    console.error("CrimznBot error:", err.message);
+    res.status(500).json({ reply: "CrimznBot is offline." });
   }
 });
 
-// ✅ PulseIt: Sentiment analysis on any topic via GPT
-app.get("/pulseit", async (req, res) => {
-  const topic = req.query.topic || "crypto";
+// 📡 PulseIt
+app.post("/pulseit", async (req, res) => {
+  const input = req.body.input || "";
   try {
-    const pulse = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content:
-            "You are CrimznBot, a sentiment analysis expert in crypto and macroeconomics. Based on insights from Raoul Pal, Cathie Wood, and Michael Saylor, analyze any topic and return a one-word sentiment: 'Bullish', 'Bearish', or 'Neutral', followed by 1 line of strategic reasoning."
+          content: `You are PulseIt — a real-time sentiment tracker and market interpreter. You read short phrases and respond in one sentence only with bullish, bearish, or neutral analysis, and why. Include sector or token impact when relevant.`
         },
-        {
-          role: "user",
-          content: `What's the sentiment on: ${topic}?`
-        }
-      ],
-      temperature: 0.4
+        { role: "user", content: input }
+      ]
     });
 
-    const pulseMsg = pulse.choices[0].message.content;
-    console.log("📣 PulseIt:", pulseMsg);
-    res.send(`<h2 style="font-family:monospace;color:#f7931a;">📊 PulseIt:</h2><p>${pulseMsg}</p>`);
+    res.json({ sentiment: response.data.choices[0].message.content.trim() });
   } catch (err) {
-    console.error("❌ PulseIt error:", err.message);
-    res.status(500).send("PulseIt is offline.");
+    console.error("PulseIt error:", err.message);
+    res.status(500).json({ sentiment: "PulseIt is offline." });
   }
 });
 
-// ✅ /whitepaper route
+// 📄 Whitepaper
 app.get("/whitepaper", (req, res) => {
-  const whitepaperPath = path.join(__dirname, "public", "whitepaper.pdf");
-  if (fs.existsSync(whitepaperPath)) {
-    res.sendFile(whitepaperPath);
-  } else {
-    res.status(404).send("Whitepaper not found.");
-  }
+  const pdf = path.join(__dirname, 'public', 'whitepaper.pdf');
+  res.sendFile(pdf, err => {
+    if (err) res.status(404).send("Whitepaper not found.");
+  });
 });
 
-// ✅ /blog route
+// 📝 Blog (e.g. /blog/2025-06-17)
 app.get("/blog/:date", (req, res) => {
-  const blogFile = path.join(__dirname, "public", "blog", `${req.params.date}.html`);
-  if (fs.existsSync(blogFile)) {
-    res.sendFile(blogFile);
-  } else {
-    res.status(404).send("Blog post not found.");
-  }
+  const blogPath = path.join(__dirname, 'public/blog', `${req.params.date}.html`);
+  res.sendFile(blogPath, err => {
+    if (err) res.status(404).send("Blog post not found.");
+  });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ CrimznBot is live @ http://localhost:${PORT}`);
-});
+// 🚀 Launch
+app.listen(PORT, () => console.log(`✅ CrimznBot backend live @ http://localhost:${PORT}`));

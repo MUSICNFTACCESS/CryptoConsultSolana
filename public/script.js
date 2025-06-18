@@ -1,73 +1,77 @@
-let questionCount = 0;
-const maxFreeQuestions = 3;
-
-function appendMessage(text, sender = 'bot') {
-  const chatBox = document.getElementById('chat-box');
-  const message = document.createElement('div');
-  message.className = `message ${sender}`;
-  message.textContent = text;
-  chatBox.appendChild(message);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-async function sendMessage() {
-  const input = document.getElementById('user-input');
-  const query = input.value.trim();
-  if (!query) return;
-
-  appendMessage(query, 'user');
-  input.value = '';
-
-  questionCount++;
-  if (questionCount > maxFreeQuestions) {
-    document.getElementById('paywall').style.display = 'block';
-    return;
-  }
-
+// 🔁 Load Prices from GPT or CoinGecko
+async function getPrices() {
   try {
-    const res = await fetch('https://cryptoconsultsolana.onrender.com/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: query })
-    });
-
+    const res = await fetch("/prices");
     const data = await res.json();
-    appendMessage(data.reply || '⚠️ No response received from CrimznBot.', 'bot');
-  } catch (err) {
-    appendMessage('⚠️ Error reaching CrimznBot.', 'bot');
-  }
-}
-
-async function checkPulse() {
-  const topic = document.getElementById('pulse-topic').value.trim();
-  const resultBox = document.getElementById('pulse-result');
-  if (!topic) return;
-
-  resultBox.textContent = '🔄 Checking sentiment...';
-  try {
-    const encodedTopic = encodeURIComponent(topic);
-    const res = await fetch(`https://cryptoconsultsolana.onrender.com/pulseit?topic=${encodedTopic}`);
-    const html = await res.text();
-    const match = html.match(/<p>(.*?)<\/p>/i);
-    resultBox.textContent = match ? match[1] : '⚠️ No sentiment returned.';
-  } catch (err) {
-    resultBox.textContent = '⚠️ Failed to fetch sentiment.';
-  }
-}
-
-async function updatePrices() {
-  try {
-    const res = await fetch('https://cryptoconsultsolana.onrender.com/prices');
-    const prices = await res.json();
-    document.getElementById('btc-price').textContent = prices.BTC || 'N/A';
-    document.getElementById('eth-price').textContent = prices.ETH || 'N/A';
-    document.getElementById('sol-price').textContent = prices.SOL || 'N/A';
+    updatePriceUI(data.BTC, data.ETH, data.SOL);
   } catch {
-    document.getElementById('btc-price').textContent = 'Error';
-    document.getElementById('eth-price').textContent = 'Error';
-    document.getElementById('sol-price').textContent = 'Error';
+    updatePriceUI("Error", "Error", "Error");
   }
 }
 
-updatePrices();
-setInterval(updatePrices, 30000);
+function updatePriceUI(btc, eth, sol) {
+  document.getElementById("btc-price").textContent = `$${btc}`;
+  document.getElementById("eth-price").textContent = `$${eth}`;
+  document.getElementById("sol-price").textContent = `$${sol}`;
+}
+
+// 💬 CrimznBot Logic
+async function sendMessage() {
+  const input = document.getElementById("crimzn-input");
+  const chat = document.getElementById("chat-container");
+  const userMsg = input.value.trim();
+  if (!userMsg) return;
+
+  const userDiv = document.createElement("div");
+  userDiv.className = "message user";
+  userDiv.textContent = userMsg;
+  chat.appendChild(userDiv);
+
+  try {
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: userMsg })
+    });
+    const data = await res.json();
+
+    const botDiv = document.createElement("div");
+    botDiv.className = "message bot";
+    botDiv.textContent = data.reply || "No reply received.";
+    chat.appendChild(botDiv);
+  } catch {
+    const botDiv = document.createElement("div");
+    botDiv.className = "message bot";
+    botDiv.textContent = "CrimznBot encountered an error.";
+    chat.appendChild(botDiv);
+  }
+
+  input.value = "";
+}
+
+// 📡 PulseIt Logic (GPT-based)
+async function analyzePulseIt() {
+  const input = document.getElementById("pulseit-input").value.trim();
+  const output = document.getElementById("pulseit-response");
+  if (!input) return;
+
+  try {
+    const res = await fetch("/pulseit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input })
+    });
+    const data = await res.json();
+    output.textContent = `📡 PulseIt: ${data.sentiment}`;
+  } catch {
+    output.textContent = "PulseIt is offline or failed.";
+  }
+}
+
+// 🔗 WalletConnect Placeholder
+function connectWallet() {
+  alert("WalletConnect logic coming soon — connection placeholder.");
+}
+
+// 🔄 Init
+getPrices();

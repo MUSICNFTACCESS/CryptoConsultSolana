@@ -8,96 +8,98 @@
       background-color: #000;
       color: #f7931a;
       font-family: 'Courier New', monospace;
-      text-align: center;
       padding: 20px;
+      text-align: center;
     }
-    h1 {
-      font-size: 32px;
-      margin-bottom: 10px;
+    .price-bar, .section, button, input {
+      margin: 15px 0;
+    }
+    .price-bar {
+      font-size: 1.2em;
     }
     button {
-      background-color: #111;
-      color: #f7931a;
-      border: 1px solid #f7931a;
+      background: #f7931a;
+      color: #000;
       padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-      cursor: pointer;
+      border: none;
       border-radius: 8px;
-    }
-    input[type="text"] {
-      padding: 10px;
-      font-size: 16px;
-      width: 80%;
-      max-width: 400px;
-      margin-bottom: 10px;
-    }
-    #chat-box {
-      margin: 20px auto;
-      max-width: 700px;
-      padding: 10px;
-      background-color: #111;
-      border-radius: 10px;
-      border: 1px solid #f7931a;
-      min-height: 150px;
-    }
-    .message { margin: 8px 0; }
-    .user { color: orange; }
-    .bot { color: lime; }
-    #prices {
-      margin: 20px 0;
-    }
-    a {
-      color: #0af;
-      text-decoration: underline;
-    }
-    #pulse-result {
-      margin-top: 10px;
-      color: lime;
       font-weight: bold;
+      cursor: pointer;
+      margin: 5px;
+    }
+    input {
+      padding: 10px;
+      width: 80%;
+      max-width: 500px;
+    }
+    #chat-container {
+      background: #111;
+      border-radius: 10px;
+      padding: 15px;
+      max-width: 600px;
+      margin: auto;
+    }
+    .message {
+      padding: 8px;
+      border-radius: 5px;
+      margin: 8px 0;
+    }
+    .user { background: #f7931a; color: #000; }
+    .bot { background: #00ff99; color: #000; }
+    #pulseit-response {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #0f0;
     }
   </style>
 </head>
 <body>
+
   <h1>CryptoConsult by Crimzn</h1>
 
-  <div id="prices">
-    <strong>Live Prices:</strong><br/>
-    BTC: <span id="btc-price">...</span><br/>
-    ETH: <span id="eth-price">...</span><br/>
-    SOL: <span id="sol-price">...</span>
+  <div class="price-bar">
+    BTC: <span id="btc-price">Loading...</span> |
+    ETH: <span id="eth-price">Loading...</span> |
+    SOL: <span id="sol-price">Loading...</span>
   </div>
 
-  <div>
-    <input type="text" id="user-input" placeholder="Ask CrimznBot anything..." />
+  <div class="section">
+    <button onclick="connectWallet()">🔗 Connect Wallet</button>
+  </div>
+
+  <div class="section">
+    <h3>Talk to CrimznBot</h3>
+    <div id="chat-container"></div>
+    <input type="text" id="crimzn-input" placeholder="Ask CrimznBot anything..." />
     <button onclick="sendMessage()">Send</button>
   </div>
 
-  <div id="chat-box"></div>
-
-  <div id="paywall" style="display: none;">
-    <p><strong>You've hit your free limit.</strong></p>
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b', '_blank')">Pay $99.99 USDC</button>
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/e1717b53-0d20-4adf-a5e3-e66ae7adf024', '_blank')">Tip 1 USDC</button>
-    <button onclick="window.open('https://t.me/Crimznbot', '_blank')">Contact via Telegram</button>
+  <div class="section">
+    <h3>Market Pulse with PulseIt</h3>
+    <input type="text" id="pulseit-input" placeholder="Type topic for sentiment analysis..." />
+    <button onclick="analyzePulseIt()">Analyze</button>
+    <div id="pulseit-response"></div>
   </div>
 
-  <div>
-    <h3>PulseIt Sentiment Check</h3>
-    <input type="text" id="pulse-topic" placeholder="Enter topic (e.g., Trump, ETFs)" />
-    <button onclick="checkPulse()">Check Sentiment</button>
-    <div id="pulse-result"></div>
+  <div class="section">
+    <h3>Payments</h3>
+    <button onclick="window.open('https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8')">Pay for Services Rendered ($99.99)</button>
+    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b')">Tip 1 USDC</button>
+    <button onclick="window.open('https://paypal.me/crimzn')">Pay with PayPal</button>
+    <button onclick="window.location.href='solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?amount=0.025&label=CryptoConsult&message=Pay%20for%20Consultation'">Pay with Solana (0.025 SOL)</button>
   </div>
 
-  <div style="margin-top: 30px;">
-    <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b', '_blank')">Pay for Services Rendered</button>
-    <button onclick="window.open('https://www.paypal.me/crimzn', '_blank')">Pay with PayPal</button>
-    <button onclick="window.open('https://t.me/Crimznbot', '_blank')">Contact Me via Telegram</button>
-    <button onclick="window.location.href='blog.html'">Read Daily Blog</button>
-    <button onclick="window.location.href='whitepaper.html'">View Whitepaper</button>
+  <div class="section">
+    <button onclick="window.open('/blog/')">📖 View Blog</button>
+    <button onclick="window.open('/whitepaper.html')">📄 View Whitepaper</button>
+  </div>
+
+  <div class="section">
+    <h3>Contact</h3>
+    <button onclick="window.open('mailto:crimzncipriano@gmail.com')">📧 Email Me</button>
+    <button onclick="window.open('https://t.me/Crimznbot')">💬 Telegram</button>
   </div>
 
   <script src="script.js"></script>
 </body>
 </html>
-
