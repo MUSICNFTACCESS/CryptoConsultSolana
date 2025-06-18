@@ -84,3 +84,26 @@ app.post("/ask", async (req, res) => {
 app.listen(process.env.PORT || 3000, () =>
   console.log("✅ CrimznBot is live on port 3000")
 );
+
+app.post("/sentiment", async (req, res) => {
+  const query = req.body.query || "";
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are PulseIt+, a real-time sentiment analyzer. Return the sentiment for the user's input in 1 line.",
+        },
+        { role: "user", content: `Analyze sentiment for: ${query}` },
+      ],
+      temperature: 0.4,
+    });
+
+    const result = response.choices[0].message.content;
+    res.json({ sentiment: result });
+  } catch (err) {
+    console.error(err);
+    res.json({ sentiment: "🚫 PulseIt+ is temporarily offline." });
+  }
+});
