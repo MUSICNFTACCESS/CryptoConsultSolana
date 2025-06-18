@@ -1,64 +1,54 @@
 import express from "express";
 import cors from "cors";
-import bodyParser from "body-parser";
-import OpenAI from "openai";
 import fetch from "node-fetch";
+import { config } from "dotenv";
+import OpenAI from "openai";
+
+config();
 
 const app = express();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static("public"));
+app.use(express.json());
+const PORT = process.env.PORT || 3000;
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const aliasMap = {
   btc: "bitcoin",
+  bitcoin: "bitcoin",
   eth: "ethereum",
+  ethereum: "ethereum",
   sol: "solana",
-  pepe: "pepe",
-  link: "chainlink",
-  jup: "jupiter-exchange",
-  ondo: "ondo-finance",
-  pyth: "pyth-network",
+  solana: "solana"
 };
 
 async function fetchCryptoPrice(term, question) {
-  const aliasMap = {
-    btc: "bitcoin",
-    eth: "ethereum",
-    sol: "solana"
-  };
-
-  const id = aliasMap[term.toLowerCase()] || term.toLowerCase();
-  const url = `https://api.coingecko.com/api/v3/coins/${id}`;
-
   try {
-    const res = await fetch(url);
-    const data = await res.json();
+    const id = aliasMap[term.toLowerCase()] || term.toLowerCase();
+    const fullData = await fetch(`https://api.coingecko.com/api/v3/coins/${id}`);
+    const data = await fullData.json();
     const price = data.market_data.current_price.usd;
     const marketCap = data.market_data.market_cap.usd;
 
-    // Smart response logic
     if (question.toLowerCase().includes("marketcap") || question.toLowerCase().includes("market cap")) {
       return `🤖 The current market cap of ${id.toUpperCase()} is approximately $${marketCap.toLocaleString()}.`;
     } else {
       return `🤖 The current price of ${id.toUpperCase()} is $${price.toLocaleString()}.`;
     }
-  } catch (error) {
-    return `🤖 Sorry, I couldn't fetch the price for ${term.toUpperCase()} at the moment.`;
+  } catch {
+    return null;
   }
 }
 
 app.post("/ask", async (req, res) => {
-  const question = req.body.question || "";
-  const lower = question.toLowerCase();
+  const { question } = req.body;
+  const words = question.toLowerCase().split(/\s+/);
+  const potentialCoins = Object.keys(aliasMap);
+  const match = words.find(w => potentialCoins.includes(w));
 
-  const match = lower.match(/\b(btc|eth|sol|pepe|link|jup|ondo|pyth)\b/);
   if (match) {
-    const livePrice = await fetchCryptoPrice(match[1]);
-    if (livePrice) {
-      return res.json({ answer: livePrice });
-    }
+    const priceResponse = await fetchCryptoPrice(match, question);
+    if (priceResponse) return res.json({ answer: priceResponse });
   }
 
   try {
@@ -68,50 +58,42 @@ app.post("/ask", async (req, res) => {
         {
           role: "system",
           content:
-            "You are CrimznBot — a GPT-4o crypto strategist combining the minds of Michael Saylor, Raoul Pal, and Cathie Wood with a sharp macroeconomic edge and a degen twist. Be concise, confident, and data-driven. Always check CoinGecko for token prices and say if unavailable. Avoid fluff. Think like a consultant, respond like a market tactician."
+            "You are CrimznBot — a GPT-4o-powered crypto strategist combining the minds of Michael Saylor, Raoul Pal, and Cathie Wood with a sharp degen edge. Your answers must be direct, strategic, and always based in data. Avoid fluff. If prices can't be fetched, say so clearly."
         },
-        {
-          role: "user",
-          content: question,
-        },
-      ],
-      temperature: 0.6,
+        { role: "user", content: question }
+      ]
     });
 
-    const response = chat.choices[0].message.content;
-    res.json({ answer: response });
-  } catch (err) {
-    console.error(err);
-    res.json({
-      answer:
-        "I'm having trouble answering that right now. Please try again shortly.",
-    });
+    const answer = chat.choices[0].message.content;
+    res.json({ answer });
+  } catch (error) {
+    res.json({ answer: "🤖 Sorry, I had trouble generating a response. Try again shortly." });
   }
 });
 
-app.listen(process.env.PORT || 3000, () =>
-  console.log("✅ CrimznBot is live on port 3000")
-);
-
 app.post("/sentiment", async (req, res) => {
-  const query = req.body.query || "";
+  const { query } = req.body;
+
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You are PulseIt+, a GPT-4o-powered sentiment tracker trained to analyze crypto-related sentiment across social and macro trends. Your tone is sharp, like a market sniper. Summarize the sentiment clearly in one line, with no fluff. Always answer in the voice of a strategist with degen instincts and macro insight."
+          content: "You are PulseIt+, a GPT-4o crypto sentiment analyzer. Respond in one concise sentence with the market sentiment for the user's input."
         },
-        { role: "user", content: `Analyze sentiment for: ${query}` },
+        { role: "user", content: `Analyze sentiment for: ${query}` }
       ],
-      temperature: 0.4,
+      temperature: 0.4
     });
 
     const result = response.choices[0].message.content;
     res.json({ sentiment: result });
   } catch (err) {
-    console.error(err);
-    res.json({ sentiment: "🚫 PulseIt+ is temporarily offline." });
+    res.json({ sentiment: "Sentiment unavailable right now." });
   }
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ CrimznBot is live on port ${PORT}`);
 });
