@@ -1,1 +1,1 @@
-fix: locked openai to v4.20.0 for compatibility Tue Jun 17 22:53:36 EDT 2025
+fix: full server.js for OpenAI v4.20.0 and all endpoints Tue Jun 17 23:04:16 EDT 2025
