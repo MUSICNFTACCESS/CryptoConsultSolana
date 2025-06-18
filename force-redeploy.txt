@@ -1,1 +1,1 @@
-redeploy: final fix to match correct CrimznBot URL Tue Jun 17 21:05:23 EDT 2025
+redeploy: fix server route to serve frontend properly Tue Jun 17 21:08:17 EDT 2025
