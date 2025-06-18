@@ -1,7 +1,7 @@
 const input = document.getElementById("user-input");
 const chatBox = document.getElementById("chat-box");
 const sendButton = document.getElementById("send-button");
-const paymentSection = document.getElementById("payment-options");
+const paywallOptions = document.getElementById("paywall-options");
 const btcPrice = document.getElementById("btc-price");
 const ethPrice = document.getElementById("eth-price");
 const solPrice = document.getElementById("sol-price");
@@ -12,22 +12,12 @@ let questionCount = 0;
 const maxFreeQuestions = 3;
 
 async function handleCrimznBot(question) {
+  chatBox.innerHTML = ""; // ✅ Clear prior messages
   chatBox.innerHTML += `<div class="user">🙋🏽‍♂️ ${question}</div>`;
   input.value = "";
 
   if (questionCount >= maxFreeQuestions) {
-    chatBox.innerHTML += `
-      <div class="bot">⚠️ Free limit reached. Please choose one:</div>
-    `;
-    paymentSection.innerHTML = `
-      <button class="button" onclick="window.open('solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?amount=0.025&label=CryptoConsult&message=Consultation%20Payment')">
-        🟢 Pay with Solana
-      </button>
-      <button class="button" onclick="window.open('mailto:crimzncipriano@gmail.com?subject=CryptoConsultation&body=Hi%20Crimzn%2C%20I%27m%20interested%20in%20booking%20a%20consultation.')">
-        📬 Contact Crimzn
-      </button>
-    `;
-    paymentSection.style.display = "block";
+    paywallOptions.style.display = "block"; // ✅ Show only payment buttons
     return;
   }
 
@@ -60,7 +50,7 @@ input.addEventListener("keypress", (e) => {
 });
 
 //
-// 💸 Fetch crypto live prices
+// 💸 Live Price Fetch
 //
 async function fetchPrices() {
   try {
