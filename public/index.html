@@ -24,6 +24,11 @@
 </head>
 <body>
   <h1>CryptoConsult by Crimzn</h1>
+
+  <button id="connect-button" class="button" onclick="connectPhantomWallet()">🔌 Connect Wallet</button>
+  <button id="disconnect-button" class="button" onclick="disconnectWallet()" style="display:none;">❌ Disconnect</button>
+  <div id="pubkey"></div>
+
   <h3>Live Prices:</h3>
   <div>BTC: <span id="btc-price">Loading...</span></div>
   <div>ETH: <span id="eth-price">Loading...</span></div>
@@ -33,60 +38,82 @@
   <div id="chat-box"></div>
   <input type="text" id="user-input" placeholder="Ask a crypto question" />
   <br />
-  <button id="send-button" class="button">Send</button>
+  <button id="send-button">Send</button>
 
   <div id="payment-options">
     <button onclick="window.open('https://commerce.coinbase.com/checkout/0193a8a5-c86f-407d-b5d7-6f89664fbdf8')">💸 Pay $99.99 USDC</button>
     <button onclick="window.open('https://commerce.coinbase.com/checkout/1d7cd946-d6ec-4278-b7ea-ee742b86982b')">🪙 Tip 1 USDC</button>
-    <button onclick="window.open('solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF')">🔓 Pay with Solana</button>
+    <button onclick="window.open('solana:Co6bkf4NpatyTCbzjhoaTS63w93iK1DmzuooCSmHSAjF?amount=99.99&label=CryptoConsult&message=Consultation%20Payment')">🔓 Pay with Solana</button>
     <button onclick="window.open('https://t.me/CrimznBot')">📬 Contact via Telegram</button>
   </div>
 
   <h3>Alpha Pulse Tracker+</h3>
   <input type="text" id="sentiment-query" placeholder="Enter token or topic" />
-  <button onclick="getSentiment()" class="button">🔍 Pulse It</button>
+  <button onclick="getSentiment()">🔍 Pulse It</button>
   <div id="sentiment-result"></div>
 
   <script>
-    document.getElementById("send-button").onclick = async () => {
-      const input = document.getElementById("user-input").value;
-      const chatBox = document.getElementById("chat-box");
-      chatBox.innerText = "🤖 Thinking...";
-      const res = await fetch("https://cryptoconsultsolana.onrender.com/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: input }),
-      });
-      const data = await res.json();
-      chatBox.innerText = "🤖 " + data.answer;
-    };
-
-    async function getSentiment() {
-      const input = document.getElementById("sentiment-query").value;
-      const result = document.getElementById("sentiment-result");
-      result.innerText = "📡 Analyzing...";
-      const res = await fetch("https://cryptoconsultsolana.onrender.com/sentiment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: input }),
-      });
-      const data = await res.json();
-      result.innerText = "📈 Sentiment: " + data.sentiment;
-    }
-
     async function loadPrices() {
       try {
         const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
         const prices = await res.json();
-        document.getElementById("btc-price").innerText = "$" + prices.bitcoin.usd;
-        document.getElementById("eth-price").innerText = "$" + prices.ethereum.usd;
-        document.getElementById("sol-price").innerText = "$" + prices.solana.usd;
+        document.getElementById("btc-price").innerText = `$${prices.bitcoin.usd.toLocaleString()}`;
+        document.getElementById("eth-price").innerText = `$${prices.ethereum.usd.toLocaleString()}`;
+        document.getElementById("sol-price").innerText = `$${prices.solana.usd.toLocaleString()}`;
       } catch {
         document.getElementById("btc-price").innerText = "n/a";
         document.getElementById("eth-price").innerText = "n/a";
         document.getElementById("sol-price").innerText = "n/a";
       }
     }
+
+    async function getSentiment() {
+      const query = document.getElementById("sentiment-query").value;
+      const res = await fetch("/sentiment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      document.getElementById("sentiment-result").innerText = `📈 Sentiment: ${data.response}`;
+    }
+
+    async function connectPhantomWallet() {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const resp = await window.solana.connect();
+          const pubkey = resp.publicKey.toString();
+          document.getElementById("pubkey").innerText = `Wallet: ${pubkey}`;
+          document.getElementById("connect-button").style.display = "none";
+          document.getElementById("disconnect-button").style.display = "inline-block";
+        } catch {
+          alert("Wallet connection failed.");
+        }
+      } else {
+        alert("Phantom Wallet not detected.");
+      }
+    }
+
+    function disconnectWallet() {
+      if (window.solana && window.solana.isPhantom) {
+        window.solana.disconnect();
+        document.getElementById("pubkey").innerText = "";
+        document.getElementById("connect-button").style.display = "inline-block";
+        document.getElementById("disconnect-button").style.display = "none";
+      }
+    }
+
+    document.getElementById("send-button").onclick = async () => {
+      const input = document.getElementById("user-input").value;
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: input })
+      });
+      const data = await res.json();
+      document.getElementById("chat-box").innerText = data.response;
+      document.getElementById("user-input").value = "";
+    };
 
     window.onload = loadPrices;
   </script>
